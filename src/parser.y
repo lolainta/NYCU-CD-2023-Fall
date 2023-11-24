@@ -33,7 +33,7 @@ typedef struct YYLTYPE {
     uint32_t last_column;
 } yyltype;
 
-extern int32_t line_num;    /* declared in scanner.l */
+extern uint32_t line_num;   /* declared in scanner.l */
 extern char current_line[]; /* declared in scanner.l */
 extern FILE *yyin;          /* declared by lex */
 extern char *yytext;        /* declared by lex */
@@ -93,6 +93,12 @@ extern int yylex_destroy(void);
 %token STRING_LITERAL
 
 %%
+
+ProgramUnit:
+    Program
+    |
+    Function
+;
 
 Program:
     ProgramName SEMICOLON
