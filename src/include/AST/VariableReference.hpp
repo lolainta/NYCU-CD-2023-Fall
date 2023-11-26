@@ -3,20 +3,21 @@
 
 #include "AST/expression.hpp"
 
-class VariableReferenceNode : public ExpressionNode {
-  public:
-    // normal reference
-    VariableReferenceNode(const uint32_t line, const uint32_t col
-                          /* TODO: name */);
-    // array reference
-    // VariableReferenceNode(const uint32_t line, const uint32_t col
-    //                       /* TODO: name, expressions */);
-    ~VariableReferenceNode() = default;
+class VariableReferenceNode : public ExpressionNode
+{
+public:
+  // normal reference
+  VariableReferenceNode(const uint32_t line, const uint32_t col
+                        /* TODO: name */);
+  // array reference
+  // VariableReferenceNode(const uint32_t line, const uint32_t col
+  //                       /* TODO: name, expressions */);
+  ~VariableReferenceNode() = default;
 
-    void print() override;
+  void print() override;
 
-  private:
-    // TODO: variable name, expressions
+private:
+  // TODO: variable name, expressions
 };
 
 #endif

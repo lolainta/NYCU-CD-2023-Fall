@@ -22,19 +22,23 @@
 // FIXME: remove this line if you choose to use visitor pattern with this template
 #ifdef I_WANT_TO_USE_VISITOR_PATTERN
 
-void AstDumper::incrementIndentation() {
+void AstDumper::incrementIndentation()
+{
     m_indentation += m_indentation_stride;
 }
 
-void AstDumper::decrementIndentation() {
+void AstDumper::decrementIndentation()
+{
     m_indentation -= m_indentation_stride;
 }
 
-static void outputIndentationSpace(const uint32_t indentation) {
+static void outputIndentationSpace(const uint32_t indentation)
+{
     std::printf("%*s", indentation, "");
 }
 
-void AstDumper::visit(ProgramNode &p_program) {
+void AstDumper::visit(ProgramNode &p_program)
+{
     outputIndentationSpace(m_indentation);
 
     std::printf("program <line: %u, col: %u> %s %s\n",
@@ -46,7 +50,8 @@ void AstDumper::visit(ProgramNode &p_program) {
     decrementIndentation();
 }
 
-void AstDumper::visit(DeclNode &p_decl) {
+void AstDumper::visit(DeclNode &p_decl)
+{
     outputIndentationSpace(m_indentation);
 
     std::printf("declaration <line: %u, col: %u>\n", p_decl.getLocation().line,
@@ -57,7 +62,8 @@ void AstDumper::visit(DeclNode &p_decl) {
     decrementIndentation();
 }
 
-void AstDumper::visit(VariableNode &p_variable) {
+void AstDumper::visit(VariableNode &p_variable)
+{
     outputIndentationSpace(m_indentation);
 
     // TODO: name, type
@@ -70,7 +76,8 @@ void AstDumper::visit(VariableNode &p_variable) {
     decrementIndentation();
 }
 
-void AstDumper::visit(ConstantValueNode &p_constant_value) {
+void AstDumper::visit(ConstantValueNode &p_constant_value)
+{
     outputIndentationSpace(m_indentation);
 
     // TODO: string of constant value
@@ -80,7 +87,8 @@ void AstDumper::visit(ConstantValueNode &p_constant_value) {
                 "TODO");
 }
 
-void AstDumper::visit(FunctionNode &p_function) {
+void AstDumper::visit(FunctionNode &p_function)
+{
     outputIndentationSpace(m_indentation);
 
     // TODO: name, prototype string
@@ -93,7 +101,8 @@ void AstDumper::visit(FunctionNode &p_function) {
     decrementIndentation();
 }
 
-void AstDumper::visit(CompoundStatementNode &p_compound_statement) {
+void AstDumper::visit(CompoundStatementNode &p_compound_statement)
+{
     outputIndentationSpace(m_indentation);
 
     std::printf("compound statement <line: %u, col: %u>\n",
@@ -105,7 +114,8 @@ void AstDumper::visit(CompoundStatementNode &p_compound_statement) {
     decrementIndentation();
 }
 
-void AstDumper::visit(PrintNode &p_print) {
+void AstDumper::visit(PrintNode &p_print)
+{
     outputIndentationSpace(m_indentation);
 
     std::printf("print statement <line: %u, col: %u>\n",
@@ -116,7 +126,8 @@ void AstDumper::visit(PrintNode &p_print) {
     decrementIndentation();
 }
 
-void AstDumper::visit(BinaryOperatorNode &p_bin_op) {
+void AstDumper::visit(BinaryOperatorNode &p_bin_op)
+{
     outputIndentationSpace(m_indentation);
 
     // TODO: operator string
@@ -129,7 +140,8 @@ void AstDumper::visit(BinaryOperatorNode &p_bin_op) {
     decrementIndentation();
 }
 
-void AstDumper::visit(UnaryOperatorNode &p_un_op) {
+void AstDumper::visit(UnaryOperatorNode &p_un_op)
+{
     outputIndentationSpace(m_indentation);
 
     // TODO: operator string
@@ -142,7 +154,8 @@ void AstDumper::visit(UnaryOperatorNode &p_un_op) {
     decrementIndentation();
 }
 
-void AstDumper::visit(FunctionInvocationNode &p_func_invocation) {
+void AstDumper::visit(FunctionInvocationNode &p_func_invocation)
+{
     outputIndentationSpace(m_indentation);
 
     // TODO: function name
@@ -156,7 +169,8 @@ void AstDumper::visit(FunctionInvocationNode &p_func_invocation) {
     decrementIndentation();
 }
 
-void AstDumper::visit(VariableReferenceNode &p_variable_ref) {
+void AstDumper::visit(VariableReferenceNode &p_variable_ref)
+{
     outputIndentationSpace(m_indentation);
 
     // TODO: variable name
@@ -170,7 +184,8 @@ void AstDumper::visit(VariableReferenceNode &p_variable_ref) {
     decrementIndentation();
 }
 
-void AstDumper::visit(AssignmentNode &p_assignment) {
+void AstDumper::visit(AssignmentNode &p_assignment)
+{
     outputIndentationSpace(m_indentation);
 
     std::printf("assignment statement <line: %u, col: %u>\n",
@@ -182,7 +197,8 @@ void AstDumper::visit(AssignmentNode &p_assignment) {
     decrementIndentation();
 }
 
-void AstDumper::visit(ReadNode &p_read) {
+void AstDumper::visit(ReadNode &p_read)
+{
     outputIndentationSpace(m_indentation);
 
     std::printf("read statement <line: %u, col: %u>\n",
@@ -193,7 +209,8 @@ void AstDumper::visit(ReadNode &p_read) {
     decrementIndentation();
 }
 
-void AstDumper::visit(IfNode &p_if) {
+void AstDumper::visit(IfNode &p_if)
+{
     outputIndentationSpace(m_indentation);
 
     std::printf("if statement <line: %u, col: %u>\n", p_if.getLocation().line,
@@ -204,7 +221,8 @@ void AstDumper::visit(IfNode &p_if) {
     decrementIndentation();
 }
 
-void AstDumper::visit(WhileNode &p_while) {
+void AstDumper::visit(WhileNode &p_while)
+{
     outputIndentationSpace(m_indentation);
 
     std::printf("while statement <line: %u, col: %u>\n",
@@ -215,7 +233,8 @@ void AstDumper::visit(WhileNode &p_while) {
     decrementIndentation();
 }
 
-void AstDumper::visit(ForNode &p_for) {
+void AstDumper::visit(ForNode &p_for)
+{
     outputIndentationSpace(m_indentation);
 
     std::printf("for statement <line: %u, col: %u>\n", p_for.getLocation().line,
@@ -226,7 +245,8 @@ void AstDumper::visit(ForNode &p_for) {
     decrementIndentation();
 }
 
-void AstDumper::visit(ReturnNode &p_return) {
+void AstDumper::visit(ReturnNode &p_return)
+{
     outputIndentationSpace(m_indentation);
 
     std::printf("return statement <line: %u, col: %u>\n",

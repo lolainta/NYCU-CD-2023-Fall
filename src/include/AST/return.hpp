@@ -3,16 +3,17 @@
 
 #include "AST/ast.hpp"
 
-class ReturnNode : public AstNode {
-  public:
-    ReturnNode(const uint32_t line, const uint32_t col
-               /* TODO: expression */);
-    ~ReturnNode() = default;
+class ReturnNode : public AstNode
+{
+public:
+  ReturnNode(const uint32_t line, const uint32_t col
+             /* TODO: expression */);
+  ~ReturnNode() = default;
 
-    void print() override;
+  void print() override;
 
-  private:
-    // TODO: expression
+private:
+  // TODO: expression
 };
 
 #endif

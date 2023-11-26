@@ -7,7 +7,8 @@ ProgramNode::ProgramNode(const uint32_t line, const uint32_t col,
 
 // visitor pattern version: const char *ProgramNode::getNameCString() const { return name.c_str(); }
 
-void ProgramNode::print() {
+void ProgramNode::print()
+{
     // TODO
     // outputIndentationSpace();
 
@@ -20,7 +21,6 @@ void ProgramNode::print() {
     // visitChildNodes();
     // decrementIndentation();
 }
-
 
 // void ProgramNode::visitChildNodes(AstNodeVisitor &p_visitor) { // visitor pattern version
 //     /* TODO

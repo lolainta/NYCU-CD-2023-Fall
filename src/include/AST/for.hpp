@@ -3,17 +3,19 @@
 
 #include "AST/ast.hpp"
 
-class ForNode : public AstNode {
-  public:
-    ForNode(const uint32_t line, const uint32_t col
-            /* TODO: declaration, assignment, expression,
-             *       compound statement */);
-    ~ForNode() = default;
+class ForNode : public AstNode
+{
+public:
+  ForNode(const uint32_t line, const uint32_t col
+          /* TODO: declaration, assignment, expression,
+           *       compound statement */
+  );
+  ~ForNode() = default;
 
-    void print() override;
+  void print() override;
 
-  private:
-    // TODO: declaration, assignment, expression, compound statement
+private:
+  // TODO: declaration, assignment, expression, compound statement
 };
 
 #endif

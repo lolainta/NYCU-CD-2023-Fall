@@ -3,22 +3,23 @@
 
 #include "AST/ast.hpp"
 
-class DeclNode : public AstNode {
-  public:
-    // variable declaration
-    DeclNode(const uint32_t line, const uint32_t col
-             /* TODO: identifiers, type */);
+class DeclNode : public AstNode
+{
+public:
+  // variable declaration
+  DeclNode(const uint32_t line, const uint32_t col
+           /* TODO: identifiers, type */);
 
-    // constant variable declaration
-    //DeclNode(const uint32_t, const uint32_t col
-    //         /* TODO: identifiers, constant */);
+  // constant variable declaration
+  // DeclNode(const uint32_t, const uint32_t col
+  //         /* TODO: identifiers, constant */);
 
-    ~DeclNode() = default;
+  ~DeclNode() = default;
 
-    void print() override;
+  void print() override;
 
-  private:
-    // TODO: variables
+private:
+  // TODO: variables
 };
 
 #endif

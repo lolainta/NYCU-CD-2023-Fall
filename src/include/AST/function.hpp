@@ -3,17 +3,19 @@
 
 #include "AST/ast.hpp"
 
-class FunctionNode : public AstNode {
-  public:
-    FunctionNode(const uint32_t line, const uint32_t col
-                 /* TODO: name, declarations, return type,
-                  *       compound statement (optional) */);
-    ~FunctionNode() = default;
+class FunctionNode : public AstNode
+{
+public:
+  FunctionNode(const uint32_t line, const uint32_t col
+               /* TODO: name, declarations, return type,
+                *       compound statement (optional) */
+  );
+  ~FunctionNode() = default;
 
-    void print() override;
+  void print() override;
 
-  private:
-    // TODO: name, declarations, return type, compound statement
+private:
+  // TODO: name, declarations, return type, compound statement
 };
 
 #endif

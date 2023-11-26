@@ -3,16 +3,17 @@
 
 #include "AST/ast.hpp"
 
-class CompoundStatementNode : public AstNode {
-  public:
-    CompoundStatementNode(const uint32_t line, const uint32_t col
-                          /* TODO: declarations, statements */);
-    ~CompoundStatementNode() = default;
+class CompoundStatementNode : public AstNode
+{
+public:
+  CompoundStatementNode(const uint32_t line, const uint32_t col
+                        /* TODO: declarations, statements */);
+  ~CompoundStatementNode() = default;
 
-    void print() override;
+  void print() override;
 
-  private:
-    // TODO: declarations, statements
+private:
+  // TODO: declarations, statements
 };
 
 #endif

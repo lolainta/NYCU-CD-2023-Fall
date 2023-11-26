@@ -3,16 +3,17 @@
 
 #include "AST/ast.hpp"
 
-class VariableNode : public AstNode {
-  public:
-    VariableNode(const uint32_t line, const uint32_t col
-                 /* TODO: variable name, type, constant value */);
-    ~VariableNode() = default;
+class VariableNode : public AstNode
+{
+public:
+  VariableNode(const uint32_t line, const uint32_t col
+               /* TODO: variable name, type, constant value */);
+  ~VariableNode() = default;
 
-    void print() override;
+  void print() override;
 
-  private:
-    // TODO: variable name, type, constant value
+private:
+  // TODO: variable name, type, constant value
 };
 
 #endif

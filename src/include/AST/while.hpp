@@ -3,16 +3,17 @@
 
 #include "AST/ast.hpp"
 
-class WhileNode : public AstNode {
-  public:
-    WhileNode(const uint32_t line, const uint32_t col
-              /* TODO: expression, compound statement */);
-    ~WhileNode() = default;
+class WhileNode : public AstNode
+{
+public:
+  WhileNode(const uint32_t line, const uint32_t col
+            /* TODO: expression, compound statement */);
+  ~WhileNode() = default;
 
-    void print() override;
+  void print() override;
 
-  private:
-    // TODO: expression, compound statement
+private:
+  // TODO: expression, compound statement
 };
 
 #endif

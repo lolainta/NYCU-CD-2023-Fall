@@ -3,16 +3,17 @@
 
 #include "AST/ast.hpp"
 
-class PrintNode : public AstNode {
-  public:
-    PrintNode(const uint32_t line, const uint32_t col
-              /* TODO: expression */);
-    ~PrintNode() = default;
+class PrintNode : public AstNode
+{
+public:
+  PrintNode(const uint32_t line, const uint32_t col
+            /* TODO: expression */);
+  ~PrintNode() = default;
 
-    void print() override;
+  void print() override;
 
-  private:
-    // TODO: expression
+private:
+  // TODO: expression
 };
 
 #endif

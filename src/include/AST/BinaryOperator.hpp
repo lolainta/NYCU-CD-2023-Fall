@@ -5,16 +5,17 @@
 
 #include <memory>
 
-class BinaryOperatorNode : public ExpressionNode {
-  public:
-    BinaryOperatorNode(const uint32_t line, const uint32_t col
-                       /* TODO: operator, expressions */);
-    ~BinaryOperatorNode() = default;
+class BinaryOperatorNode : public ExpressionNode
+{
+public:
+  BinaryOperatorNode(const uint32_t line, const uint32_t col
+                     /* TODO: operator, expressions */);
+  ~BinaryOperatorNode() = default;
 
-    void print() override;
+  void print() override;
 
-  private:
-    // TODO: operator, expressions
+private:
+  // TODO: operator, expressions
 };
 
 #endif
