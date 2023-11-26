@@ -20,7 +20,7 @@ public:
   );
 
   // visitor pattern version: const char *getNameCString() const;
-  // void print() override;
+  void print() override;
 };
 
 #endif
