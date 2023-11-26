@@ -2,13 +2,8 @@ CC = g++
 LEX = flex
 YACC = bison
 CFLAGS = -Wall -std=gnu++14 -g
+LIBS = -lfl -ly
 INCLUDE = -Iinclude
-ifeq ($(shell uname),Darwin)
-LIBS    = -ll
-else
-LIBS    = -lfl
-endif
-LIBS    += -ly
 
 SCANNER = scanner
 PARSER = parser
@@ -16,7 +11,11 @@ PARSER = parser
 ASTDIR = lib/AST/
 AST := $(shell find $(ASTDIR) -name '*.cpp')
 
-SRC := $(AST)
+VISITORDIR = lib/visitor/
+VISITOR := $(shell find $(VISITORDIR) -name '*.cpp')
+
+SRC := $(AST) \
+	   $(VISITOR)
 
 EXEC = $(PARSER)
 OBJS = $(PARSER:=.cpp) \
@@ -44,5 +43,8 @@ $(EXEC): $(OBJS)
 
 clean:
 	$(RM) $(DEPS) $(SCANNER:=.cpp) $(PARSER:=.cpp) $(PARSER:=.h) $(OBJS) $(EXEC)
+
+test:
+	./unittests/test.sh
 
 -include $(DEPS)
