@@ -1,12 +1,18 @@
 #include "AST/read.hpp"
 
 // TODO
-ReadNode::ReadNode(const uint32_t line, const uint32_t col)
-    : AstNode{line, col} {}
+ReadNode::ReadNode(const uint32_t line,
+                   const uint32_t col,
+                   AstNode *p_variable_ref)
+    : AstNode{line, col}
+{
+    variable_ref = dynamic_cast<VariableReferenceNode *>(p_variable_ref);
+}
 
-// TODO: You may use code snippets in AstDumper.cpp
+void ReadNode::accept(AstNodeVisitor &p_visitor) { p_visitor.visit(*this); }
 void ReadNode::print() {}
 
-// void ReadNode::visitChildNodes(AstNodeVisitor &p_visitor) {
-//     // TODO
-// }
+void ReadNode::visitChildNodes(AstNodeVisitor &p_visitor)
+{
+    variable_ref->accept(p_visitor);
+}

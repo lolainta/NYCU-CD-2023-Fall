@@ -192,10 +192,10 @@ void AstDumper::visit(VariableReferenceNode &p_variable_ref)
     std::printf("variable reference <line: %u, col: %u> %s\n",
                 p_variable_ref.getLocation().line,
                 p_variable_ref.getLocation().col,
-                "TODO");
+                p_variable_ref.getNameCString());
 
     incrementIndentation();
-    // p_variable_ref.visitChildNodes(*this);
+    p_variable_ref.visitChildNodes(*this);
     decrementIndentation();
 }
 
@@ -208,7 +208,7 @@ void AstDumper::visit(AssignmentNode &p_assignment)
                 p_assignment.getLocation().col);
 
     incrementIndentation();
-    // p_assignment.visitChildNodes(*this);
+    p_assignment.visitChildNodes(*this);
     decrementIndentation();
 }
 
@@ -220,7 +220,7 @@ void AstDumper::visit(ReadNode &p_read)
                 p_read.getLocation().line, p_read.getLocation().col);
 
     incrementIndentation();
-    // p_read.visitChildNodes(*this);
+    p_read.visitChildNodes(*this);
     decrementIndentation();
 }
 

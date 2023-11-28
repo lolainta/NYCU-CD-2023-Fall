@@ -415,21 +415,22 @@ CompoundStatement:
 
 Simple:
     VariableReference ASSIGN Expression SEMICOLON {
-        // $$ = new AssignmentNode(@1.first_line, @1.first_column, $1, $3);
+        $$ = new AssignmentNode(@2.first_line, @2.first_column, $1, $3);
     }
     |
     PRINT Expression SEMICOLON {
-        // printf("print %d %d\n", @1.first_line, @1.first_column);
         $$ = new PrintNode(@1.first_line, @1.first_column, $2);
     }
     |
     READ VariableReference SEMICOLON {
-        // $$ = new ReadNode(@1.first_line, @1.first_column, $2);
+        $$ = new ReadNode(@1.first_line, @1.first_column, $2);
     }
 ;
 
 VariableReference:
-    ID ArrRefList
+    ID ArrRefList {
+        $$ = new VariableReferenceNode(@1.first_line, @1.first_column, $1, $2);
+    }
 ;
 
 ArrRefList:
@@ -443,9 +444,15 @@ ArrRefList:
 ;
 
 ArrRefs:
-    L_BRACKET Expression R_BRACKET
+    L_BRACKET Expression R_BRACKET {
+        $$ = new std::vector<AstNode *>();
+        $$->push_back($2);
+    }
     |
-    ArrRefs L_BRACKET Expression R_BRACKET
+    ArrRefs L_BRACKET Expression R_BRACKET {
+        $$ = $1;
+        $$->push_back($3);
+    }
 ;
 
 Condition:
@@ -534,22 +541,18 @@ Statements:
 
 Expression:
     L_PARENTHESIS Expression R_PARENTHESIS {
-        // printf("parenthesis %d %d\n", @1.first_line, @1.first_column);
         $$ = $2;
     }
     |
     MINUS Expression %prec UNARY_MINUS {
-        // printf("unary minus %d %d\n", @1.first_line, @1.first_column);
         $$ = new UnaryOperatorNode(@1.first_line, @1.first_column, Operator::NEGATIVE_op, $2);
     }
     |
     Expression MULTIPLY Expression {
-        // printf("multiply %d %d\n", @2.first_line, @2.first_column);
         $$ = new BinaryOperatorNode(@2.first_line, @2.first_column, Operator::MULTIPLY_op, $1, $3);
     }
     |
     Expression DIVIDE Expression {
-        // printf("divide %d %d\n", @2.first_line, @2.first_column);
         $$ = new BinaryOperatorNode(@2.first_line, @2.first_column, Operator::DIVIDE_op, $1, $3);
     }
     |
