@@ -486,7 +486,14 @@ While:
 For:
     FOR ID ASSIGN INT_LITERAL TO INT_LITERAL DO
     CompoundStatement
-    END DO
+    END DO {
+        auto var =  new VariableNode(@2.first_line, @2.first_column, PType(SType::int_t), $2);
+        auto decl = new DeclNode(@2.first_line, @2.first_column, new std::vector<VariableNode *>({var}));
+        auto var_ref = new VariableReferenceNode(@2.first_line, @2.first_column, var->getName().c_str(), new std::vector<AstNode *>());
+        auto init = new AssignmentNode(@3.first_line, @3.first_column, var_ref, new ConstantValueNode(@4.first_line, @4.first_column, PType(SType::int_t), "", $4, 0, 0));
+        auto cnst = new ConstantValueNode(@6.first_line, @6.first_column, PType(SType::int_t), "", $6, 0, 0);
+        $$ = new ForNode(@1.first_line, @1.first_column, decl, init, cnst, $8);
+    }
 ;
 
 Return:
