@@ -70,7 +70,7 @@ extern int yylex_destroy(void);
     struct PType*type;
 };
 
-%type <identifier> ProgramName ID
+%type <identifier> ProgramName ID FunctionName
 %type <integer> INT_LITERAL
 %type <real> REAL_LITERAL
 %type <str> STRING_LITERAL
@@ -78,13 +78,10 @@ extern int yylex_destroy(void);
 %type <node> CompoundStatement
 %type <node> StringAndBoolean IntegerAndReal
 %type <boolean> NegOrNot
-%type <node> Program ProgramUnit Function FunctionDeclaration FunctionDefinition FunctionName FormalArg FormalArgs FormalArgList ReturnType
-%type <node_list> DeclarationList Declarations FunctionList Functions StatementList Statements Expressions IdList
-%type <type> Type ScalarType ArrType ArrDecl
+%type <node> Program ProgramUnit Function FunctionDeclaration FunctionDefinition FormalArg
+%type <node_list> DeclarationList Declarations FunctionList Functions StatementList Statements Expressions IdList FormalArgs FormalArgList
+%type <type> Type ScalarType ArrType ArrDecl ReturnType
 
-    /* Follow the order in scanner.l */
-
-    /* Delimiter */
 %token COMMA SEMICOLON COLON
 %token L_PARENTHESIS R_PARENTHESIS
 %token L_BRACKET R_BRACKET
@@ -129,7 +126,7 @@ Program:
     DeclarationList FunctionList CompoundStatement
     /* End of ProgramBody */
     END {
-        root = new ProgramNode(@1.first_line, @1.first_column, $1, $3, $5);
+        root = new ProgramNode(@1.first_line, @1.first_column, $1, $3, $4, $5);
         // free($1);
     }
 ;
@@ -191,14 +188,19 @@ Function:
 
 FunctionDeclaration:
     FunctionName L_PARENTHESIS FormalArgList R_PARENTHESIS ReturnType SEMICOLON {
-        printf("FunctionDeclaration\n");
+        $$ = new FunctionNode(@1.first_line, @1.first_column, $1, $3, $5);
     }
 ;
 
 FunctionDefinition:
     FunctionName L_PARENTHESIS FormalArgList R_PARENTHESIS ReturnType
     CompoundStatement
-    END
+    END {
+        auto tmp = new FunctionNode(@1.first_line, @1.first_column, $1, $3, $5);
+        auto ret = static_cast<FunctionNode *>(tmp);
+        ret->setBody($6);
+        $$ = ret;
+    }
 ;
 
 FunctionName:
@@ -206,19 +208,37 @@ FunctionName:
 ;
 
 FormalArgList:
-    Epsilon
+    Epsilon {
+        $$ = new std::vector<AstNode *>();
+    }
     |
-    FormalArgs
+    FormalArgs {
+        $$ = $1;
+    }
 ;
 
 FormalArgs:
-    FormalArg
+    FormalArg {
+        $$ = new std::vector<AstNode*>();
+        $$->push_back($1);
+    }
     |
-    FormalArgs SEMICOLON FormalArg
+    FormalArgs SEMICOLON FormalArg {
+        $$ = $1;
+        $$->push_back($3);
+    }
 ;
 
 FormalArg:
-    IdList COLON Type
+    IdList COLON Type {
+        auto var_nodes = new std::vector<VariableNode *>();
+        for (auto &var : *$1) {
+            auto vnode = static_cast<VariableNode *>(var);
+            vnode->setType(*static_cast<PType*>($3));
+            var_nodes->push_back(vnode);
+        }
+        $$ = new DeclNode(@1.first_line, @1.first_column, var_nodes);
+    }
 ;
 
 IdList:
@@ -234,9 +254,13 @@ IdList:
 ;
 
 ReturnType:
-    COLON ScalarType
+    COLON ScalarType {
+        $$ = new PType(*static_cast<PType*>($2));
+    }
     |
-    Epsilon
+    Epsilon {
+        $$ = new PType(SType::void_t);
+    }
 ;
 
     /*

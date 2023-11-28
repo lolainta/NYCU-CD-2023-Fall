@@ -70,12 +70,11 @@ void AstDumper::visit(DeclNode &p_decl)
 void AstDumper::visit(VariableNode &p_variable)
 {
     outputIndentationSpace(m_indentation);
-    // TODO: name, type
     std::printf("variable <line: %u, col: %u> %s %s\n",
                 p_variable.getLocation().line,
                 p_variable.getLocation().col,
                 p_variable.getName().c_str(),
-                typeToString(p_variable.getType()));
+                typeToString(p_variable.getType()).c_str());
 
     incrementIndentation();
     p_variable.visitChildNodes(*this);
@@ -97,13 +96,28 @@ void AstDumper::visit(FunctionNode &p_function)
 {
     outputIndentationSpace(m_indentation);
 
-    // TODO: name, prototype string
-    std::printf("function declaration <line: %u, col: %u> %s %s\n",
+    std::string args = "";
+    for (auto &arg : p_function.getVarDecls())
+    {
+        for (auto &type : arg->getTypes())
+        {
+            args += typeToString(type) + ", ";
+        }
+    }
+    if (args.size())
+    {
+        args.pop_back();
+        args.pop_back();
+    }
+    args = "(" + args + ")";
+    std::printf("function declaration <line: %u, col: %u> %s %s %s\n",
                 p_function.getLocation().line, p_function.getLocation().col,
-                "TODO", "TODO");
+                p_function.getNameCString(),
+                typeToString(p_function.getReturnType()).c_str(),
+                args.c_str());
 
     incrementIndentation();
-    // p_function.visitChildNodes(*this);
+    p_function.visitChildNodes(*this);
     decrementIndentation();
 }
 
@@ -263,10 +277,7 @@ void AstDumper::visit(ReturnNode &p_return)
     decrementIndentation();
 }
 
-// FIXME: remove this line if you choose to use visitor pattern with this template
-// #endif
-
-const char *AstDumper::typeToString(const PType &type)
+std::string AstDumper::typeToString(const PType &type)
 {
     std::string ret = "";
     switch (type.stype)
@@ -283,6 +294,9 @@ const char *AstDumper::typeToString(const PType &type)
     case SType::bool_t:
         ret = "boolean";
         break;
+    case SType::void_t:
+        ret = "void";
+        break;
     default:
         ret = "unknown";
         break;
@@ -295,7 +309,7 @@ const char *AstDumper::typeToString(const PType &type)
     {
         ret += "[" + std::to_string(i) + "]";
     }
-    return strdup(ret.c_str());
+    return ret;
 }
 
 const char *AstDumper::valueToString(const PType type, const ConstantValue value)

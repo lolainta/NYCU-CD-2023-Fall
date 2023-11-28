@@ -23,7 +23,7 @@ public:
   ProgramNode(const uint32_t line, const uint32_t col,
               const char *const p_name,
               std::vector<AstNode *> *p_var_decls,
-              // std::vector<AstNode *> *p_func_decls,
+              std::vector<AstNode *> *p_func_decls,
               AstNode *p_body);
 
   // visitor pattern version:

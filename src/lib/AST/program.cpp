@@ -4,7 +4,7 @@
 ProgramNode::ProgramNode(const uint32_t line, const uint32_t col,
                          const char *const p_name,
                          std::vector<AstNode *> *p_var_decls,
-                         //  std::vector<AstNode *> *p_func_decls,
+                         std::vector<AstNode *> *p_func_decls,
                          AstNode *p_body)
     : AstNode{line, col}, name(p_name)
 {
@@ -12,10 +12,10 @@ ProgramNode::ProgramNode(const uint32_t line, const uint32_t col,
     {
         var_decls.push_back(dynamic_cast<DeclNode *>(decl));
     }
-    // for (auto &decl : *p_func_decls)
-    // {
-    //     func_decls.push_back(dynamic_cast<FunctionNode *>(decl));
-    // }
+    for (auto &decl : *p_func_decls)
+    {
+        func_decls.push_back(dynamic_cast<FunctionNode *>(decl));
+    }
     body = dynamic_cast<CompoundStatementNode *>(p_body);
 }
 
@@ -51,10 +51,10 @@ void ProgramNode::visitChildNodes(AstNodeVisitor &p_visitor)
     {
         decl->accept(p_visitor);
     }
-    // for (auto &decl : func_decls)
-    // {
-    //     decl->accept(p_visitor);
-    // }
+    for (auto &decl : func_decls)
+    {
+        decl->accept(p_visitor);
+    }
     body->accept(p_visitor);
 
     /* TODO

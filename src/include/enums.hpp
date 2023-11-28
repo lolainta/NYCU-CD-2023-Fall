@@ -15,6 +15,7 @@ enum SType
     real_t = 1,
     bool_t = 2,
     string_t = 3,
+    void_t = 4,
     unknown_t = -1
 };
 

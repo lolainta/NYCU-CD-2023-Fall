@@ -2,20 +2,35 @@
 #define __AST_FUNCTION_NODE_H
 
 #include "AST/ast.hpp"
+#include "AST/decl.hpp"
+#include "AST/CompoundStatement.hpp"
+#include "enums.hpp"
+#include <vector>
+#include <string>
 
 class FunctionNode : public AstNode
 {
 public:
-  FunctionNode(const uint32_t line, const uint32_t col
-               /* TODO: name, declarations, return type,
-                *       compound statement (optional) */
-  );
+  FunctionNode(const uint32_t line, const uint32_t col,
+               const char *name,
+               std::vector<AstNode *> *var_decls,
+               PType *return_type);
   ~FunctionNode() = default;
 
+  const char *getNameCString() const;
+  const PType &getReturnType() const;
+  const std::vector<DeclNode *> &getVarDecls() const;
+  void setBody(AstNode *body);
+  void visitChildNodes(AstNodeVisitor &p_visitor);
+
+  void accept(AstNodeVisitor &p_visitor) override;
   void print() override;
 
 private:
-  // TODO: name, declarations, return type, compound statement
+  std::string name;
+  PType return_type;
+  std::vector<DeclNode *> var_decls;
+  CompoundStatementNode *body;
 };
 
 #endif

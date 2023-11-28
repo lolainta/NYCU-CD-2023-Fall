@@ -7,24 +7,19 @@
 #include "AST/variable.hpp"
 #include "visitor/AstNodeVisitor.hpp"
 #include "enums.hpp"
-
+#include <vector>
 class DeclNode : public AstNode
 {
 public:
-  // variable declaration
   DeclNode(const uint32_t line, const uint32_t col, std::vector<VariableNode *> *p_var_list);
 
-  // constant variable declaration
-  // DeclNode(const uint32_t, const uint32_t col
-  //         /* TODO: identifiers, constant */);
-
   ~DeclNode() = default;
+  std::vector<PType> getTypes();
   void accept(AstNodeVisitor &p_visitor) override;
   void print() override;
   void visitChildNodes(AstNodeVisitor &p_visitor);
 
 private:
-  // TODO: variables
   std::vector<VariableNode *> *var_list;
 };
 
