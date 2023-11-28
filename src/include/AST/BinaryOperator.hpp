@@ -2,20 +2,27 @@
 #define __AST_BINARY_OPERATOR_NODE_H
 
 #include "AST/expression.hpp"
-
+#include "visitor/AstNodeVisitor.hpp"
+#include "enums.hpp"
 #include <memory>
 
 class BinaryOperatorNode : public ExpressionNode
 {
 public:
-  BinaryOperatorNode(const uint32_t line, const uint32_t col
-                     /* TODO: operator, expressions */);
+  BinaryOperatorNode(const uint32_t line, const uint32_t col,
+                     Operator op,
+                     AstNode *p_left,
+                     AstNode *p_right);
   ~BinaryOperatorNode() = default;
-
+  Operator getOperator() const;
+  void accept(AstNodeVisitor &p_visitor) override;
   void print() override;
+  void visitChildNodes(AstNodeVisitor &p_visitor);
 
 private:
-  // TODO: operator, expressions
+  Operator op;
+  ExpressionNode *left;
+  ExpressionNode *right;
 };
 
 #endif

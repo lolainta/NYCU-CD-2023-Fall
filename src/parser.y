@@ -75,11 +75,12 @@ extern int yylex_destroy(void);
 %type <real> REAL_LITERAL
 %type <str> STRING_LITERAL
 %type <node> Declaration LiteralConstant
-%type <node> Statement CompoundStatement
-%type <node> StringAndBoolean IntegerAndReal
+%type <node> Statement CompoundStatement Simple Condition While For Return FunctionCall FunctionInvocation
+%type <node> StringAndBoolean IntegerAndReal Expression VariableReference
 %type <boolean> NegOrNot
 %type <node> Program ProgramUnit Function FunctionDeclaration FunctionDefinition FormalArg
-%type <node_list> DeclarationList Declarations FunctionList Functions StatementList Statements Expressions IdList FormalArgs FormalArgList
+%type <node_list> DeclarationList Declarations FunctionList Functions StatementList Statements IdList FormalArgs FormalArgList
+%type <node_list> ExpressionList Expressions ArrRefs ArrRefList
 %type <type> Type ScalarType ArrType ArrDecl ReturnType
 
 %token COMMA SEMICOLON COLON
@@ -263,10 +264,6 @@ ReturnType:
     }
 ;
 
-    /*
-       Data Types and Declarations
-                                   */
-
 Declaration:
     VAR IdList COLON Type SEMICOLON {
         auto var_nodes = new std::vector<VariableNode *>();
@@ -391,10 +388,6 @@ IntegerAndReal:
     }
 ;
 
-    /*
-       Statements
-                  */
-
 Statement:
     CompoundStatement
     |
@@ -421,11 +414,18 @@ CompoundStatement:
 ;
 
 Simple:
-    VariableReference ASSIGN Expression SEMICOLON
+    VariableReference ASSIGN Expression SEMICOLON {
+        // $$ = new AssignmentNode(@1.first_line, @1.first_column, $1, $3);
+    }
     |
-    PRINT Expression SEMICOLON
+    PRINT Expression SEMICOLON {
+        // printf("print %d %d\n", @1.first_line, @1.first_column);
+        $$ = new PrintNode(@1.first_line, @1.first_column, $2);
+    }
     |
-    READ VariableReference SEMICOLON
+    READ VariableReference SEMICOLON {
+        // $$ = new ReadNode(@1.first_line, @1.first_column, $2);
+    }
 ;
 
 VariableReference:
@@ -433,9 +433,13 @@ VariableReference:
 ;
 
 ArrRefList:
-    Epsilon
+    Epsilon {
+        $$ = new std::vector<AstNode *>();
+    }
     |
-    ArrRefs
+    ArrRefs {
+        $$ = $1;
+    }
 ;
 
 ArrRefs:
@@ -479,19 +483,31 @@ FunctionCall:
 ;
 
 FunctionInvocation:
-    ID L_PARENTHESIS ExpressionList R_PARENTHESIS
+    ID L_PARENTHESIS ExpressionList R_PARENTHESIS {
+        $$ = new FunctionInvocationNode(@1.first_line, @1.first_column, $1, $3);
+    }
 ;
 
 ExpressionList:
-    Epsilon
+    Epsilon {
+        $$ = new std::vector<AstNode *>();
+    }
     |
-    Expressions
+    Expressions {
+        $$ = $1;
+    }
 ;
 
 Expressions:
-    Expression
+    Expression {
+        $$ = new std::vector<AstNode *>();
+        $$->push_back($1);
+    }
     |
-    Expressions COMMA Expression
+    Expressions COMMA Expression {
+        $$ = $1;
+        $$->push_back($3);
+    }
 ;
 
 StatementList:
@@ -517,50 +533,90 @@ Statements:
 ;
 
 Expression:
-    L_PARENTHESIS Expression R_PARENTHESIS
+    L_PARENTHESIS Expression R_PARENTHESIS {
+        // printf("parenthesis %d %d\n", @1.first_line, @1.first_column);
+        $$ = $2;
+    }
     |
-    MINUS Expression %prec UNARY_MINUS
+    MINUS Expression %prec UNARY_MINUS {
+        // printf("unary minus %d %d\n", @1.first_line, @1.first_column);
+        $$ = new UnaryOperatorNode(@1.first_line, @1.first_column, Operator::NEGATIVE_op, $2);
+    }
     |
-    Expression MULTIPLY Expression
+    Expression MULTIPLY Expression {
+        // printf("multiply %d %d\n", @2.first_line, @2.first_column);
+        $$ = new BinaryOperatorNode(@2.first_line, @2.first_column, Operator::MULTIPLY_op, $1, $3);
+    }
     |
-    Expression DIVIDE Expression
+    Expression DIVIDE Expression {
+        // printf("divide %d %d\n", @2.first_line, @2.first_column);
+        $$ = new BinaryOperatorNode(@2.first_line, @2.first_column, Operator::DIVIDE_op, $1, $3);
+    }
     |
-    Expression MOD Expression
+    Expression MOD Expression {
+        $$ = new BinaryOperatorNode(@2.first_line, @2.first_column, Operator::MOD_op, $1, $3);
+    }
     |
-    Expression PLUS Expression
+    Expression PLUS Expression {
+        $$ = new BinaryOperatorNode(@2.first_line, @2.first_column, Operator::PLUS_op, $1, $3);
+    }
     |
-    Expression MINUS Expression
+    Expression MINUS Expression {
+        $$ = new BinaryOperatorNode(@2.first_line, @2.first_column, Operator::MINUS_op, $1, $3);
+    }
     |
-    Expression LESS Expression
+    Expression LESS Expression {
+        $$ = new BinaryOperatorNode(@2.first_line, @2.first_column, Operator::LESS_op, $1, $3);
+    }
     |
-    Expression LESS_OR_EQUAL Expression
+    Expression LESS_OR_EQUAL Expression {
+        $$ = new BinaryOperatorNode(@2.first_line, @2.first_column, Operator::LESS_OR_EQUAL_op, $1, $3);
+    }
     |
-    Expression GREATER Expression
+    Expression GREATER Expression {
+        $$ = new BinaryOperatorNode(@2.first_line, @2.first_column, Operator::GREATER_op, $1, $3);
+    }
     |
-    Expression GREATER_OR_EQUAL Expression
+    Expression GREATER_OR_EQUAL Expression {
+        $$ = new BinaryOperatorNode(@2.first_line, @2.first_column, Operator::GREATER_OR_EQUAL_op, $1, $3);}
     |
-    Expression EQUAL Expression
+    Expression EQUAL Expression {
+        $$ = new BinaryOperatorNode(@2.first_line, @2.first_column, Operator::EQUAL_op, $1, $3);
+    }
     |
-    Expression NOT_EQUAL Expression
+    Expression NOT_EQUAL Expression {
+        $$ = new BinaryOperatorNode(@2.first_line, @2.first_column, Operator::NOT_EQUAL_op, $1, $3);
+    }
     |
-    NOT Expression
+    NOT Expression {
+        $$ = new UnaryOperatorNode(@1.first_line, @1.first_column, Operator::NOT_op, $2);
+    }
     |
-    Expression AND Expression
+    Expression AND Expression {
+        $$ = new BinaryOperatorNode(@2.first_line, @2.first_column, Operator::AND_op, $1, $3);
+    }
     |
-    Expression OR Expression
+    Expression OR Expression {
+        $$ = new BinaryOperatorNode(@2.first_line, @2.first_column, Operator::OR_op, $1, $3);
+    }
     |
-    IntegerAndReal
+    IntegerAndReal {
+        $$ = $1;
+    }
     |
-    StringAndBoolean
+    StringAndBoolean {
+        $$ = $1;
+    }
     |
-    VariableReference
+    VariableReference {
+        $$ = $1;
+    }
     |
-    FunctionInvocation
+    FunctionInvocation {
+        $$ = $1;
+    }
 ;
 
-    /*
-       misc
-            */
 Epsilon:
 ;
 

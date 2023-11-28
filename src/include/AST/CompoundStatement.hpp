@@ -10,8 +10,8 @@ class CompoundStatementNode : public AstNode
 {
 public:
   CompoundStatementNode(const uint32_t line, const uint32_t col,
-                        std::vector<AstNode *> *decls, std::vector<AstNode *> *stmts
-                        /* TODO: declarations, statements */);
+                        std::vector<AstNode *> *decls,
+                        std::vector<AstNode *> *stmts);
   ~CompoundStatementNode() = default;
 
   void accept(AstNodeVisitor &p_visitor) override;
@@ -19,9 +19,8 @@ public:
   void visitChildNodes(AstNodeVisitor &p_visitor);
 
 private:
-  // TODO: declarations, statements
   std::vector<DeclNode *> decls;
-  std::vector<CompoundStatementNode *> stmts;
+  std::vector<AstNode *> stmts;
 };
 
 #endif

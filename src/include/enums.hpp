@@ -29,3 +29,22 @@ typedef struct PType
     PType(SType stype) : stype(stype) {}
     PType(SType stype, std::vector<int> dim) : stype(stype), dim(dim) {}
 } PType;
+
+enum Operator
+{
+    NEGATIVE_op,
+    MULTIPLY_op,
+    DIVIDE_op,
+    MOD_op,
+    PLUS_op,
+    MINUS_op,
+    LESS_op,
+    LESS_OR_EQUAL_op,
+    GREATER_op,
+    GREATER_OR_EQUAL_op,
+    EQUAL_op,
+    NOT_EQUAL_op,
+    AND_op,
+    OR_op,
+    NOT_op
+};

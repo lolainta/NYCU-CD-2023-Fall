@@ -1,12 +1,27 @@
 #include "AST/BinaryOperator.hpp"
 
-// TODO
-BinaryOperatorNode::BinaryOperatorNode(const uint32_t line, const uint32_t col)
-    : ExpressionNode{line, col} {}
+BinaryOperatorNode::BinaryOperatorNode(const uint32_t line, const uint32_t col,
+                                       Operator op,
+                                       AstNode *p_left,
+                                       AstNode *p_right)
 
-// TODO: You may use code snippets in AstDumper.cpp
+    : ExpressionNode{line, col}
+{
+    this->op = op;
+    this->left = dynamic_cast<ExpressionNode *>(p_left);
+    this->right = dynamic_cast<ExpressionNode *>(p_right);
+}
+
+Operator BinaryOperatorNode::getOperator() const { return op; }
+
+void BinaryOperatorNode::accept(AstNodeVisitor &p_visitor)
+{
+    p_visitor.visit(*this);
+}
 void BinaryOperatorNode::print() {}
 
-// void BinaryOperatorNode::visitChildNodes(AstNodeVisitor &p_visitor) {
-//     // TODO
-// }
+void BinaryOperatorNode::visitChildNodes(AstNodeVisitor &p_visitor)
+{
+    left->accept(p_visitor);
+    right->accept(p_visitor);
+}

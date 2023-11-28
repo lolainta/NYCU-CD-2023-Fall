@@ -39,6 +39,7 @@ private:
   void decrementIndentation();
   std::string typeToString(const PType &type);
   const char *valueToString(const PType type, const ConstantValue value);
+  std::string operatorToString(const Operator op);
 };
 
 #endif

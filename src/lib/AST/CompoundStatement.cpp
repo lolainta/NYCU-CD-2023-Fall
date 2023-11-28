@@ -13,7 +13,7 @@ CompoundStatementNode::CompoundStatementNode(const uint32_t line,
     }
     for (auto &stmt : *stmts)
     {
-        this->stmts.push_back(dynamic_cast<CompoundStatementNode *>(stmt));
+        this->stmts.push_back(stmt);
     }
 }
 
