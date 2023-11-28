@@ -503,7 +503,7 @@ Return:
 ;
 
 FunctionCall:
-    FunctionInvocation SEMICOLON
+    FunctionInvocation SEMICOLON 
 ;
 
 FunctionInvocation:

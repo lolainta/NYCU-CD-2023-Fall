@@ -25,6 +25,10 @@ void FunctionInvocationNode::accept(AstNodeVisitor &p_visitor)
 }
 void FunctionInvocationNode::print() {}
 
-// void FunctionInvocationNode::visitChildNodes(AstNodeVisitor &p_visitor) {
-//     // TODO
-// }
+void FunctionInvocationNode::visitChildNodes(AstNodeVisitor &p_visitor)
+{
+    for (auto &expr : expressions)
+    {
+        expr->accept(p_visitor);
+    }
+}

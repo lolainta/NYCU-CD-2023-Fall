@@ -180,7 +180,7 @@ void AstDumper::visit(FunctionInvocationNode &p_func_invocation)
                 p_func_invocation.getNameCString());
 
     incrementIndentation();
-    // p_func_invocation.visitChildNodes(*this);
+    p_func_invocation.visitChildNodes(*this);
     decrementIndentation();
 }
 

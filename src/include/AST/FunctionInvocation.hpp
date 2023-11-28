@@ -16,6 +16,7 @@ public:
   const char *getNameCString() const;
   void accept(AstNodeVisitor &p_visitor) override;
   void print() override;
+  void visitChildNodes(AstNodeVisitor &p_visitor);
 
 private:
   std::string name;
