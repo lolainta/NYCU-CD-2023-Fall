@@ -2,6 +2,7 @@
 #define __AST_EXPRESSION_NODE_H
 
 #include "AST/ast.hpp"
+#include "enums.hpp"
 
 class ExpressionNode : public AstNode
 {
@@ -12,6 +13,7 @@ public:
 protected:
   // for carrying type of result of an expression
   // TODO: for next assignment
+  PType type;
 };
 
 #endif

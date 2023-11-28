@@ -20,7 +20,7 @@
 #include <cstdio>
 
 // FIXME: remove this line if you choose to use visitor pattern with this template
-#ifdef I_WANT_TO_USE_VISITOR_PATTERN
+// #ifdef I_WANT_TO_USE_VISITOR_PATTERN
 
 void AstDumper::incrementIndentation()
 {
@@ -41,9 +41,12 @@ void AstDumper::visit(ProgramNode &p_program)
 {
     outputIndentationSpace(m_indentation);
 
-    std::printf("program <line: %u, col: %u> %s %s\n",
-                p_program.getLocation().line, p_program.getLocation().col,
-                p_program.getNameCString(), "void");
+    std::printf(
+        "program <line: %u, col: %u> %s %s\n",
+        p_program.getLocation().line,
+        p_program.getLocation().col,
+        p_program.getNameCString(),
+        "void");
 
     incrementIndentation();
     p_program.visitChildNodes(*this);
@@ -54,8 +57,10 @@ void AstDumper::visit(DeclNode &p_decl)
 {
     outputIndentationSpace(m_indentation);
 
-    std::printf("declaration <line: %u, col: %u>\n", p_decl.getLocation().line,
-                p_decl.getLocation().col);
+    std::printf(
+        "declaration <line: %u, col: %u>\n",
+        p_decl.getLocation().line,
+        p_decl.getLocation().col);
 
     incrementIndentation();
     p_decl.visitChildNodes(*this);
@@ -65,11 +70,12 @@ void AstDumper::visit(DeclNode &p_decl)
 void AstDumper::visit(VariableNode &p_variable)
 {
     outputIndentationSpace(m_indentation);
-
     // TODO: name, type
     std::printf("variable <line: %u, col: %u> %s %s\n",
-                p_variable.getLocation().line, p_variable.getLocation().col,
-                "TODO", "TODO");
+                p_variable.getLocation().line,
+                p_variable.getLocation().col,
+                p_variable.getName().c_str(),
+                typeToString(p_variable.getType()));
 
     incrementIndentation();
     p_variable.visitChildNodes(*this);
@@ -84,7 +90,7 @@ void AstDumper::visit(ConstantValueNode &p_constant_value)
     std::printf("constant <line: %u, col: %u> %s\n",
                 p_constant_value.getLocation().line,
                 p_constant_value.getLocation().col,
-                "TODO");
+                valueToString(p_constant_value.getType(), p_constant_value.getValue()));
 }
 
 void AstDumper::visit(FunctionNode &p_function)
@@ -97,7 +103,7 @@ void AstDumper::visit(FunctionNode &p_function)
                 "TODO", "TODO");
 
     incrementIndentation();
-    p_function.visitChildNodes(*this);
+    // p_function.visitChildNodes(*this);
     decrementIndentation();
 }
 
@@ -122,7 +128,7 @@ void AstDumper::visit(PrintNode &p_print)
                 p_print.getLocation().line, p_print.getLocation().col);
 
     incrementIndentation();
-    p_print.visitChildNodes(*this);
+    // p_print.visitChildNodes(*this);
     decrementIndentation();
 }
 
@@ -136,7 +142,7 @@ void AstDumper::visit(BinaryOperatorNode &p_bin_op)
                 "TODO");
 
     incrementIndentation();
-    p_bin_op.visitChildNodes(*this);
+    // p_bin_op.visitChildNodes(*this);
     decrementIndentation();
 }
 
@@ -150,7 +156,7 @@ void AstDumper::visit(UnaryOperatorNode &p_un_op)
                 "TODO");
 
     incrementIndentation();
-    p_un_op.visitChildNodes(*this);
+    // p_un_op.visitChildNodes(*this);
     decrementIndentation();
 }
 
@@ -165,7 +171,7 @@ void AstDumper::visit(FunctionInvocationNode &p_func_invocation)
                 "TODO");
 
     incrementIndentation();
-    p_func_invocation.visitChildNodes(*this);
+    // p_func_invocation.visitChildNodes(*this);
     decrementIndentation();
 }
 
@@ -180,7 +186,7 @@ void AstDumper::visit(VariableReferenceNode &p_variable_ref)
                 "TODO");
 
     incrementIndentation();
-    p_variable_ref.visitChildNodes(*this);
+    // p_variable_ref.visitChildNodes(*this);
     decrementIndentation();
 }
 
@@ -193,7 +199,7 @@ void AstDumper::visit(AssignmentNode &p_assignment)
                 p_assignment.getLocation().col);
 
     incrementIndentation();
-    p_assignment.visitChildNodes(*this);
+    // p_assignment.visitChildNodes(*this);
     decrementIndentation();
 }
 
@@ -205,7 +211,7 @@ void AstDumper::visit(ReadNode &p_read)
                 p_read.getLocation().line, p_read.getLocation().col);
 
     incrementIndentation();
-    p_read.visitChildNodes(*this);
+    // p_read.visitChildNodes(*this);
     decrementIndentation();
 }
 
@@ -217,7 +223,7 @@ void AstDumper::visit(IfNode &p_if)
                 p_if.getLocation().col);
 
     incrementIndentation();
-    p_if.visitChildNodes(*this);
+    // p_if.visitChildNodes(*this);
     decrementIndentation();
 }
 
@@ -229,7 +235,7 @@ void AstDumper::visit(WhileNode &p_while)
                 p_while.getLocation().line, p_while.getLocation().col);
 
     incrementIndentation();
-    p_while.visitChildNodes(*this);
+    // p_while.visitChildNodes(*this);
     decrementIndentation();
 }
 
@@ -241,7 +247,7 @@ void AstDumper::visit(ForNode &p_for)
                 p_for.getLocation().col);
 
     incrementIndentation();
-    p_for.visitChildNodes(*this);
+    // p_for.visitChildNodes(*this);
     decrementIndentation();
 }
 
@@ -253,9 +259,58 @@ void AstDumper::visit(ReturnNode &p_return)
                 p_return.getLocation().line, p_return.getLocation().col);
 
     incrementIndentation();
-    p_return.visitChildNodes(*this);
+    // p_return.visitChildNodes(*this);
     decrementIndentation();
 }
 
 // FIXME: remove this line if you choose to use visitor pattern with this template
-#endif
+// #endif
+
+const char *AstDumper::typeToString(const PType &type)
+{
+    std::string ret = "";
+    switch (type.stype)
+    {
+    case SType::int_t:
+        ret = "integer";
+        break;
+    case SType::real_t:
+        ret = "real";
+        break;
+    case SType::string_t:
+        ret = "string";
+        break;
+    case SType::bool_t:
+        ret = "boolean";
+        break;
+    default:
+        ret = "unknown";
+        break;
+    }
+    if (type.dim.size())
+    {
+        ret += " ";
+    }
+    for (auto i : type.dim)
+    {
+        ret += "[" + std::to_string(i) + "]";
+    }
+    return strdup(ret.c_str());
+}
+
+const char *AstDumper::valueToString(const PType type, const ConstantValue value)
+{
+    switch (type.stype)
+    {
+    case SType::int_t:
+        return std::to_string(value.int_val).c_str();
+    case SType::real_t:
+        return std::to_string(value.real_val).c_str();
+    case SType::string_t:
+        return value.str_val;
+    case SType::bool_t:
+        return value.bool_val ? "true" : "false";
+    default:
+        return "unknown";
+    }
+}

@@ -19,10 +19,15 @@
 #include "AST/variable.hpp"
 #include "AST/while.hpp"
 
+#include "AST/AstDumper.hpp"
+#include "enums.hpp"
+
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <vector>
+
 
 #define YYLTYPE yyltype
 
@@ -46,6 +51,8 @@ extern int yylex_destroy(void);
 %}
 
 %code requires {
+    #include <vector>
+    #include <string>
     class AstNode;
 }
 
@@ -53,11 +60,27 @@ extern int yylex_destroy(void);
 %union {
     /* basic semantic value */
     char *identifier;
-
+    int32_t integer;
+    double real;
+    bool boolean;
+    char *str;
+    std::vector<std::string> *str_list;
     AstNode *node;
+    std::vector<AstNode*> *node_list;
+    struct PType*type;
 };
 
 %type <identifier> ProgramName ID
+%type <integer> INT_LITERAL
+%type <real> REAL_LITERAL
+%type <str> STRING_LITERAL
+%type <node> Declaration Statement LiteralConstant
+%type <node> CompoundStatement 
+%type <node> StringAndBoolean IntegerAndReal 
+%type <boolean> NegOrNot
+%type <node> Program ProgramUnit Function FunctionDeclaration FunctionDefinition FunctionName FormalArg FormalArgs FormalArgList ReturnType
+%type <node_list> DeclarationList Declarations FunctionList Functions StatementList Statements Expressions IdList
+%type <type> Type ScalarType ArrType ArrDecl
 
     /* Follow the order in scanner.l */
 
@@ -106,10 +129,8 @@ Program:
     DeclarationList FunctionList CompoundStatement
     /* End of ProgramBody */
     END {
-        root = new ProgramNode(@1.first_line, @1.first_column,
-                               $1);
-
-        free($1);
+        root = new ProgramNode(@1.first_line, @1.first_column, $1, $3, $5);
+        // free($1);
     }
 ;
 
@@ -118,31 +139,51 @@ ProgramName:
 ;
 
 DeclarationList:
-    Epsilon
+    Epsilon {
+        $$ = new std::vector<AstNode *>();
+    }
     |
-    Declarations
+    Declarations 
+    {
+        $$ = $1;
+    }
 ;
 
 Declarations:
-    Declaration
+    Declaration {
+        $$ = new std::vector<AstNode *>();
+        $$->push_back($1);
+    }
     |
-    Declarations Declaration
+    Declarations Declaration {
+        $$ = $1;
+        $$->push_back($2);
+    }
 ;
 
 FunctionList:
-    Epsilon
+    Epsilon {
+        $$ = new std::vector<AstNode *>();
+    }
     |
-    Functions
+    Functions {
+        $$ = $1;
+    }
 ;
 
 Functions:
-    Function
+    Function {
+        $$ = new std::vector<AstNode *>();
+        $$->push_back($1);
+    }
     |
-    Functions Function
+    Functions Function {
+        $$ = $1;
+        $$->push_back($2);
+    }
 ;
 
 Function:
-    FunctionDeclaration
     |
     FunctionDefinition
 ;
@@ -178,9 +219,15 @@ FormalArg:
 ;
 
 IdList:
-    ID
+    ID {
+        $$ = new std::vector<AstNode*>();
+        $$->push_back(new VariableNode(@1.first_line, @1.first_column, PType(SType::unknown_t), $1));
+    }
     |
-    IdList COMMA ID
+    IdList COMMA ID {
+        $$ = $1;
+        $$->push_back(new VariableNode(@3.first_line, @3.first_column, PType(SType::unknown_t), $3));
+    }
 ;
 
 ReturnType:
@@ -194,9 +241,27 @@ ReturnType:
                                    */
 
 Declaration:
-    VAR IdList COLON Type SEMICOLON
+    VAR IdList COLON Type SEMICOLON {
+        auto var_nodes = new std::vector<VariableNode *>();
+        for (auto &var : *$2) {
+            auto vnode = static_cast<VariableNode *>(var);
+            vnode->setType(*static_cast<PType*>($4));
+            var_nodes->push_back(vnode);
+        }
+        $$ = new DeclNode(@1.first_line, @1.first_column, var_nodes);
+    }
     |
-    VAR IdList COLON LiteralConstant SEMICOLON
+    VAR IdList COLON LiteralConstant SEMICOLON {
+        auto literal = (ConstantValueNode *)($4);
+        auto var_nodes = new std::vector<VariableNode *>();
+        for (auto &var : *$2) {
+            auto vnode = static_cast<VariableNode *>(var);
+            vnode->setType(literal->getType());
+            vnode->setConstVal(literal);
+            var_nodes->push_back(vnode);
+        }
+        $$ = new DeclNode(@1.first_line, @1.first_column, var_nodes);
+    }
 ;
 
 Type:
@@ -206,51 +271,98 @@ Type:
 ;
 
 ScalarType:
-    INTEGER
+    INTEGER{
+        $$ = new PType(SType::int_t);
+    }
     |
-    REAL
+    REAL {
+        $$ = new PType(SType::real_t);
+    }
     |
-    STRING
+    STRING {
+        $$ = new PType(SType::string_t);
+    }
     |
-    BOOLEAN
+    BOOLEAN {
+        $$ = new PType(SType::bool_t);
+    }
 ;
 
 ArrType:
-    ArrDecl ScalarType
+    ArrDecl ScalarType {
+        auto arr_type = static_cast<PType*>($1);
+        arr_type->setBaseType($2->stype);
+        $$ = arr_type;
+    }
 ;
 
 ArrDecl:
-    ARRAY INT_LITERAL OF
+    ARRAY INT_LITERAL OF {
+        $$ = new PType(SType::unknown_t, std::vector<int>(1,$2));
+    }
     |
-    ArrDecl ARRAY INT_LITERAL OF
+    ArrDecl ARRAY INT_LITERAL OF {
+        auto arr_type = static_cast<PType*>($1);
+        arr_type->addDim($3);
+        $$ = arr_type;
+    }
 ;
 
 LiteralConstant:
-    NegOrNot INT_LITERAL
+    NegOrNot INT_LITERAL {
+        if ($1) {
+            $$ = new ConstantValueNode(@1.first_line, @1.first_column, PType(SType::int_t), "", -$2, 0, 0);
+        } else {
+            $$ = new ConstantValueNode(@2.first_line, @2.first_column, PType(SType::int_t), "", $2, 0, 0);
+        }
+    }
     |
-    NegOrNot REAL_LITERAL
+    NegOrNot REAL_LITERAL {
+        if ($1) {
+            $$ = new ConstantValueNode(@1.first_line, @1.first_column, PType(SType::real_t), "", 0, -$2, 0);
+        } else {
+            $$ = new ConstantValueNode(@2.first_line, @2.first_column, PType(SType::real_t), "", 0, $2, 0);
+        }
+    
+    }
     |
-    StringAndBoolean
+    StringAndBoolean {
+        $$ = $1;
+    }
 ;
 
 NegOrNot:
-    Epsilon
+    Epsilon {
+        $$ = false;
+    }
     |
-    MINUS %prec UNARY_MINUS
+    MINUS %prec UNARY_MINUS {
+        $$ = true;
+    }
 ;
 
 StringAndBoolean:
-    STRING_LITERAL
+    STRING_LITERAL {
+        $$ = new ConstantValueNode(@1.first_line, @1.first_column, PType(SType::string_t), $1, 0, 0, 0);
+    }
     |
-    TRUE
+    TRUE {
+        $$ = new ConstantValueNode(@1.first_line, @1.first_column, PType(SType::bool_t), "", 0, 0, true);
+    }
     |
-    FALSE
+    FALSE {
+        $$ = new ConstantValueNode(@1.first_line, @1.first_column, PType(SType::bool_t), "", 0, 0, false);
+    }
 ;
 
 IntegerAndReal:
-    INT_LITERAL
+    INT_LITERAL {
+        $$ = new ConstantValueNode(@1.first_line, @1.first_column, PType(SType::int_t), 0, $1, 0, 0);
+    }
     |
-    REAL_LITERAL
+    REAL_LITERAL {
+        $$ = new ConstantValueNode(@1.first_line, @1.first_column, PType(SType::real_t), 0, 0, $1, 0);
+    }
 ;
 
     /*
@@ -258,7 +370,9 @@ IntegerAndReal:
                   */
 
 Statement:
-    CompoundStatement
+    CompoundStatement {
+        $$ = $1;
+    }
     |
     Simple
     |
@@ -277,7 +391,9 @@ CompoundStatement:
     BEGIN_
     DeclarationList
     StatementList
-    END
+    END {
+        $$ = new CompoundStatementNode(@1.first_line, @1.first_column, $2, $3);
+    }
 ;
 
 Simple:
@@ -355,15 +471,25 @@ Expressions:
 ;
 
 StatementList:
-    Epsilon
+    Epsilon {
+        $$ = new std::vector<AstNode *>();
+    }
     |
-    Statements
+    Statements {
+        $$ = $1;
+    }
 ;
 
 Statements:
-    Statement
+    Statement {
+        $$ = new std::vector<AstNode *>();
+        $$->push_back($1);
+    }
     |
-    Statements Statement
+    Statements Statement {
+        $$ = $1;
+        $$->push_back($2);
+    }
 ;
 
 Expression:
@@ -445,7 +571,8 @@ int main(int argc, const char *argv[]) {
     yyparse();
 
     if (argc >= 3 && strcmp(argv[2], "--dump-ast") == 0) {
-        root->print();
+        AstDumper dumper;
+        root->accept(dumper);
     }
 
     printf("\n"

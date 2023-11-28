@@ -25,6 +25,7 @@ public:
 
   const Location &getLocation() const;
 
+  virtual void accept(AstNodeVisitor &p_visitor) = 0;
   virtual void print() = 0;
 };
 

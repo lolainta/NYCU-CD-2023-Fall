@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include "parser.h"
 
 #define YY_USER_ACTION \
@@ -113,14 +112,30 @@ nonzero_float ({nonzero_integer}\.(0|[0-9]*[1-9]))|(0\.([0-9]*[1-9]))
 }
 
     /* Integer (decimal/octal) */
-{integer} { LIST_LITERAL("integer", yytext); return INT_LITERAL; }
-0[0-7]+   { LIST_LITERAL("oct_integer", yytext); return INT_LITERAL; }
+{integer} {
+    LIST_LITERAL("integer", yytext); 
+    yylval.integer = atoi(yytext);
+    return INT_LITERAL;
+}
+0[0-7]+   {
+    LIST_LITERAL("oct_integer", yytext);
+    yylval.integer = strtol(yytext, NULL, 8);
+    return INT_LITERAL;
+}
 
     /* Floating-Point */
-{float} { LIST_LITERAL("float", yytext); return REAL_LITERAL; }
+{float} {
+    LIST_LITERAL("float", yytext);
+    yylval.real = atof(yytext);
+    return REAL_LITERAL;
+}
 
     /* Scientific Notation [Ee][+-]?[0-9]+ */
-({nonzero_integer}|{nonzero_float})[Ee][+-]?({integer}) { LIST_LITERAL("scientific", yytext); return REAL_LITERAL; }
+({nonzero_integer}|{nonzero_float})[Ee][+-]?({integer}) {
+    LIST_LITERAL("scientific", yytext);
+    yylval.real = atof(yytext);
+    return REAL_LITERAL;
+}
 
     /* String */
 \"([^"\n]|\"\")*\" {
@@ -145,6 +160,7 @@ nonzero_float ({nonzero_integer}\.(0|[0-9]*[1-9]))|(0\.([0-9]*[1-9]))
     }
     *str_ptr = '\0';
     LIST_LITERAL("string", string_literal);
+    yylval.str = strdup(string_literal);
     return STRING_LITERAL;
 }
 

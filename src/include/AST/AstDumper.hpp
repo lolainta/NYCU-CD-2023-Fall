@@ -2,7 +2,7 @@
 #define AST_AST_DUMPER_H
 
 #include "visitor/AstNodeVisitor.hpp"
-
+#include "enums.hpp"
 #include <cstdint>
 
 class AstDumper final : public AstNodeVisitor
@@ -36,6 +36,8 @@ public:
 private:
   void incrementIndentation();
   void decrementIndentation();
+  const char *typeToString(const PType &type);
+  const char *valueToString(const PType type, const ConstantValue value);
 };
 
 #endif
