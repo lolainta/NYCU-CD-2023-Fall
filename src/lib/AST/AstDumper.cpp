@@ -243,7 +243,7 @@ void AstDumper::visit(WhileNode &p_while)
                 p_while.getLocation().line, p_while.getLocation().col);
 
     incrementIndentation();
-    // p_while.visitChildNodes(*this);
+    p_while.visitChildNodes(*this);
     decrementIndentation();
 }
 

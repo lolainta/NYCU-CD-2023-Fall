@@ -478,7 +478,9 @@ ElseOrNot:
 While:
     WHILE Expression DO
     CompoundStatement
-    END DO
+    END DO {
+        $$ = new WhileNode(@1.first_line, @1.first_column, $2, $4);
+    }
 ;
 
 For:
