@@ -76,8 +76,8 @@ extern int yylex_destroy(void);
 %type <str> STRING_LITERAL
 %type <node> Declaration LiteralConstant
 %type <node> Statement CompoundStatement Simple Condition While For Return FunctionCall FunctionInvocation
-%type <node> StringAndBoolean IntegerAndReal Expression VariableReference
-%type <boolean> NegOrNot
+%type <node> StringAndBoolean IntegerAndReal Expression VariableReference ElseOrNot
+%type <boolean> NegOrNot 
 %type <node> Program ProgramUnit Function FunctionDeclaration FunctionDefinition FormalArg
 %type <node_list> DeclarationList Declarations FunctionList Functions StatementList Statements IdList FormalArgs FormalArgList
 %type <node_list> ExpressionList Expressions ArrRefs ArrRefList
@@ -459,14 +459,20 @@ Condition:
     IF Expression THEN
     CompoundStatement
     ElseOrNot
-    END IF
+    END IF {
+        $$ = new IfNode(@1.first_line, @1.first_column, $2, $4, $5);
+    }
 ;
 
 ElseOrNot:
     ELSE
-    CompoundStatement
+    CompoundStatement {
+        $$ = $2;
+    }
     |
-    Epsilon
+    Epsilon {
+        $$ = nullptr;
+    }
 ;
 
 While:

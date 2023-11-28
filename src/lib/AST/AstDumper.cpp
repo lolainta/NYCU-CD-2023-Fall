@@ -188,7 +188,6 @@ void AstDumper::visit(VariableReferenceNode &p_variable_ref)
 {
     outputIndentationSpace(m_indentation);
 
-    // TODO: variable name
     std::printf("variable reference <line: %u, col: %u> %s\n",
                 p_variable_ref.getLocation().line,
                 p_variable_ref.getLocation().col,
@@ -232,7 +231,7 @@ void AstDumper::visit(IfNode &p_if)
                 p_if.getLocation().col);
 
     incrementIndentation();
-    // p_if.visitChildNodes(*this);
+    p_if.visitChildNodes(*this);
     decrementIndentation();
 }
 
