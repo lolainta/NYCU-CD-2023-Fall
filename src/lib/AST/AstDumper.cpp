@@ -267,7 +267,7 @@ void AstDumper::visit(ReturnNode &p_return)
                 p_return.getLocation().line, p_return.getLocation().col);
 
     incrementIndentation();
-    // p_return.visitChildNodes(*this);
+    p_return.visitChildNodes(*this);
     decrementIndentation();
 }
 

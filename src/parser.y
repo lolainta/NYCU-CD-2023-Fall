@@ -497,7 +497,9 @@ For:
 ;
 
 Return:
-    RETURN Expression SEMICOLON
+    RETURN Expression SEMICOLON {
+        $$ = new ReturnNode(@1.first_line, @1.first_column, $2);
+    }
 ;
 
 FunctionCall:
