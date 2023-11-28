@@ -124,7 +124,6 @@ void AstDumper::visit(FunctionNode &p_function)
 void AstDumper::visit(CompoundStatementNode &p_compound_statement)
 {
     outputIndentationSpace(m_indentation);
-
     std::printf("compound statement <line: %u, col: %u>\n",
                 p_compound_statement.getLocation().line,
                 p_compound_statement.getLocation().col);

@@ -13,7 +13,7 @@ CompoundStatementNode::CompoundStatementNode(const uint32_t line,
     }
     for (auto &stmt : *stmts)
     {
-        this->stmts.push_back(dynamic_cast<FunctionNode *>(stmt));
+        this->stmts.push_back(dynamic_cast<CompoundStatementNode *>(stmt));
     }
 }
 
@@ -28,7 +28,6 @@ void CompoundStatementNode::print() {}
 
 void CompoundStatementNode::visitChildNodes(AstNodeVisitor &p_visitor)
 {
-    // TODO
     for (auto &decl : decls)
     {
         decl->accept(p_visitor);
@@ -37,14 +36,4 @@ void CompoundStatementNode::visitChildNodes(AstNodeVisitor &p_visitor)
     {
         stmt->accept(p_visitor);
     }
-    /* TODO
-     *
-     * for (auto &decl : var_decls) {
-     *     decl->accept(p_visitor);
-     * }
-     *
-     * // functions
-     *
-     * body->accept(p_visitor);
-     */
 }

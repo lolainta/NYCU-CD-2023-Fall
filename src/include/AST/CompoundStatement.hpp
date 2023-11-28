@@ -21,7 +21,7 @@ public:
 private:
   // TODO: declarations, statements
   std::vector<DeclNode *> decls;
-  std::vector<FunctionNode *> stmts;
+  std::vector<CompoundStatementNode *> stmts;
 };
 
 #endif

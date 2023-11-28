@@ -74,8 +74,8 @@ extern int yylex_destroy(void);
 %type <integer> INT_LITERAL
 %type <real> REAL_LITERAL
 %type <str> STRING_LITERAL
-%type <node> Declaration Statement LiteralConstant
-%type <node> CompoundStatement
+%type <node> Declaration LiteralConstant
+%type <node> Statement CompoundStatement
 %type <node> StringAndBoolean IntegerAndReal
 %type <boolean> NegOrNot
 %type <node> Program ProgramUnit Function FunctionDeclaration FunctionDefinition FormalArg
@@ -127,7 +127,7 @@ Program:
     /* End of ProgramBody */
     END {
         root = new ProgramNode(@1.first_line, @1.first_column, $1, $3, $4, $5);
-        // free($1);
+        free($1);
     }
 ;
 
@@ -396,9 +396,7 @@ IntegerAndReal:
                   */
 
 Statement:
-    CompoundStatement {
-        $$ = $1;
-    }
+    CompoundStatement
     |
     Simple
     |
