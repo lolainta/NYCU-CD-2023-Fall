@@ -75,8 +75,8 @@ extern int yylex_destroy(void);
 %type <real> REAL_LITERAL
 %type <str> STRING_LITERAL
 %type <node> Declaration Statement LiteralConstant
-%type <node> CompoundStatement 
-%type <node> StringAndBoolean IntegerAndReal 
+%type <node> CompoundStatement
+%type <node> StringAndBoolean IntegerAndReal
 %type <boolean> NegOrNot
 %type <node> Program ProgramUnit Function FunctionDeclaration FunctionDefinition FunctionName FormalArg FormalArgs FormalArgList ReturnType
 %type <node_list> DeclarationList Declarations FunctionList Functions StatementList Statements Expressions IdList
@@ -143,7 +143,7 @@ DeclarationList:
         $$ = new std::vector<AstNode *>();
     }
     |
-    Declarations 
+    Declarations
     {
         $$ = $1;
     }
@@ -184,12 +184,15 @@ Functions:
 ;
 
 Function:
+    FunctionDeclaration
     |
     FunctionDefinition
 ;
 
 FunctionDeclaration:
-    FunctionName L_PARENTHESIS FormalArgList R_PARENTHESIS ReturnType SEMICOLON
+    FunctionName L_PARENTHESIS FormalArgList R_PARENTHESIS ReturnType SEMICOLON {
+        printf("FunctionDeclaration\n");
+    }
 ;
 
 FunctionDefinition:
@@ -271,7 +274,7 @@ Type:
 ;
 
 ScalarType:
-    INTEGER{
+    INTEGER {
         $$ = new PType(SType::int_t);
     }
     |
@@ -323,7 +326,6 @@ LiteralConstant:
         } else {
             $$ = new ConstantValueNode(@2.first_line, @2.first_column, PType(SType::real_t), "", 0, $2, 0);
         }
-    
     }
     |
     StringAndBoolean {
