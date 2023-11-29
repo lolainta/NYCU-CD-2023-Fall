@@ -39,11 +39,8 @@ static void appendToCurrentLine(const char *yytext_ptr);
 integer 0|[1-9][0-9]*
 float {integer}\.(0|[0-9]*[1-9])
 nonzero_integer [1-9][0-9]*
-    /* If the integral part is nonzero, then the fractional part can be either zero
-    or not. However, if the integral part is zero, the fractional part cannot be zero. */
 nonzero_float ({nonzero_integer}\.(0|[0-9]*[1-9]))|(0\.([0-9]*[1-9]))
 
-    /* exclusive start condition */
 %x CCOMMENT
 
 %%
