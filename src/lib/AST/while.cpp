@@ -1,7 +1,8 @@
 #include "AST/while.hpp"
 
 // TODO
-WhileNode::WhileNode(const uint32_t line, const uint32_t col,
+WhileNode::WhileNode(const uint32_t line,
+                     const uint32_t col,
                      AstNode *p_condition,
                      AstNode *p_body)
     : AstNode{line, col}
@@ -10,9 +11,7 @@ WhileNode::WhileNode(const uint32_t line, const uint32_t col,
     body = dynamic_cast<CompoundStatementNode *>(p_body);
 }
 
-// TODO: You may use code snippets in AstDumper.cpp
 void WhileNode::accept(AstNodeVisitor &p_visitor) { p_visitor.visit(*this); }
-void WhileNode::print() {}
 
 void WhileNode::visitChildNodes(AstNodeVisitor &p_visitor)
 {

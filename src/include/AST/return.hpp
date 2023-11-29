@@ -8,12 +8,12 @@
 class ReturnNode : public AstNode
 {
 public:
-  ReturnNode(const uint32_t line, const uint32_t col,
+  ReturnNode(const uint32_t line,
+             const uint32_t col,
              AstNode *p_expression);
   ~ReturnNode() = default;
 
   void accept(AstNodeVisitor &p_visitor) override;
-  void print() override;
   void visitChildNodes(AstNodeVisitor &p_visitor);
 
 private:

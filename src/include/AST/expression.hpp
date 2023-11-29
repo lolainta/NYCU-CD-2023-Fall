@@ -7,8 +7,8 @@
 class ExpressionNode : public AstNode
 {
 public:
-  ExpressionNode(const uint32_t line, const uint32_t col);
-
+  ExpressionNode(const uint32_t line,
+                 const uint32_t col);
   ~ExpressionNode() = default;
 
 protected:

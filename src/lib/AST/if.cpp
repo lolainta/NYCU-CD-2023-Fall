@@ -1,6 +1,7 @@
 #include "AST/if.hpp"
 
-IfNode::IfNode(const uint32_t line, const uint32_t col,
+IfNode::IfNode(const uint32_t line,
+               const uint32_t col,
                AstNode *p_condition,
                AstNode *p_if_statement,
                AstNode *p_else_statement)
@@ -12,7 +13,6 @@ IfNode::IfNode(const uint32_t line, const uint32_t col,
 }
 
 void IfNode::accept(AstNodeVisitor &p_visitor) { p_visitor.visit(*this); }
-void IfNode::print() {}
 
 void IfNode::visitChildNodes(AstNodeVisitor &p_visitor)
 {

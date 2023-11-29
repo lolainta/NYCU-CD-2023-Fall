@@ -9,18 +9,14 @@
 class VariableReferenceNode : public ExpressionNode
 {
 public:
-  // normal reference
   VariableReferenceNode(const uint32_t line, const uint32_t col,
                         const char *p_name,
                         std::vector<AstNode *> *p_expressions);
-  // array reference
-  // VariableReferenceNode(const uint32_t line, const uint32_t col
-  //                       /* TODO: name, expressions */);
   ~VariableReferenceNode() = default;
+
   const char *getNameCString() const;
 
   void accept(AstNodeVisitor &p_visitor) override;
-  void print() override;
   void visitChildNodes(AstNodeVisitor &p_visitor);
 
 private:

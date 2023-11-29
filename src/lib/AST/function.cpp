@@ -1,13 +1,12 @@
 #include "AST/function.hpp"
 
-FunctionNode::FunctionNode(const uint32_t line, const uint32_t col,
+FunctionNode::FunctionNode(const uint32_t line,
+                           const uint32_t col,
                            const char *name,
                            std::vector<AstNode *> *var_decls,
                            PType *return_type)
-    : AstNode{line, col}
+    : AstNode{line, col}, name(name), return_type(*return_type)
 {
-    this->name = name;
-    this->return_type = *return_type;
     for (auto &decl : *var_decls)
     {
         this->var_decls.push_back(dynamic_cast<DeclNode *>(decl));
@@ -19,9 +18,8 @@ const PType &FunctionNode::getReturnType() const { return return_type; }
 const std::vector<DeclNode *> &FunctionNode::getVarDecls() const { return var_decls; }
 void FunctionNode::setBody(AstNode *body) { this->body = dynamic_cast<CompoundStatementNode *>(body); }
 
-// TODO: You may use code snippets in AstDumper.cpp
 void FunctionNode::accept(AstNodeVisitor &p_visitor) { p_visitor.visit(*this); }
-void FunctionNode::print() {}
+
 void FunctionNode::visitChildNodes(AstNodeVisitor &p_visitor)
 {
     for (auto &decl : var_decls)

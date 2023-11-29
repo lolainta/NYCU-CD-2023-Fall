@@ -11,12 +11,12 @@ union ConstantValue
 
 enum SType
 {
-    int_t = 0,
-    real_t = 1,
-    bool_t = 2,
-    string_t = 3,
-    void_t = 4,
-    unknown_t = -1
+    int_t,
+    real_t,
+    bool_t,
+    string_t,
+    void_t,
+    unknown_t,
 };
 
 typedef struct PType
@@ -46,5 +46,5 @@ enum Operator
     NOT_EQUAL_op,
     AND_op,
     OR_op,
-    NOT_op
+    NOT_op,
 };

@@ -9,11 +9,13 @@
 class WhileNode : public AstNode
 {
 public:
-  WhileNode(const uint32_t line, const uint32_t col, AstNode *p_expression, AstNode *p_compound_statement);
+  WhileNode(const uint32_t line,
+            const uint32_t col,
+            AstNode *p_expression,
+            AstNode *p_compound_statement);
   ~WhileNode() = default;
 
   void accept(AstNodeVisitor &p_visitor) override;
-  void print() override;
   void visitChildNodes(AstNodeVisitor &p_visitor);
 
 private:

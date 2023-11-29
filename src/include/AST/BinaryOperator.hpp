@@ -9,14 +9,16 @@
 class BinaryOperatorNode : public ExpressionNode
 {
 public:
-  BinaryOperatorNode(const uint32_t line, const uint32_t col,
+  BinaryOperatorNode(const uint32_t line,
+                     const uint32_t col,
                      Operator op,
                      AstNode *p_left,
                      AstNode *p_right);
   ~BinaryOperatorNode() = default;
+
   Operator getOperator() const;
+
   void accept(AstNodeVisitor &p_visitor) override;
-  void print() override;
   void visitChildNodes(AstNodeVisitor &p_visitor);
 
 private:

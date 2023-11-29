@@ -17,7 +17,6 @@ public:
   ~AssignmentNode() = default;
 
   void accept(AstNodeVisitor &p_visitor) override;
-  void print() override;
   void visitChildNodes(AstNodeVisitor &p_visitor);
 
 private:

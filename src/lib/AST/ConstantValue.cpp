@@ -1,5 +1,6 @@
 #include "AST/ConstantValue.hpp"
-ConstantValueNode::ConstantValueNode(const uint32_t line, const uint32_t col,
+ConstantValueNode::ConstantValueNode(const uint32_t line,
+                                     const uint32_t col,
                                      PType type,
                                      const char *str_val,
                                      int32_t int_val,
@@ -30,9 +31,7 @@ ConstantValueNode::ConstantValueNode(const uint32_t line, const uint32_t col,
     }
 }
 
-#include <cstdio>
 const PType ConstantValueNode::getType() const { return type; }
 const ConstantValue ConstantValueNode::getValue() const { return value; }
-// TODO: You may use code snippets in AstDumper.cpp
+
 void ConstantValueNode::accept(AstNodeVisitor &p_visitor) { p_visitor.visit(*this); }
-void ConstantValueNode::print() {}

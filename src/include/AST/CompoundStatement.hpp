@@ -9,13 +9,13 @@
 class CompoundStatementNode : public AstNode
 {
 public:
-  CompoundStatementNode(const uint32_t line, const uint32_t col,
+  CompoundStatementNode(const uint32_t line,
+                        const uint32_t col,
                         std::vector<AstNode *> *decls,
                         std::vector<AstNode *> *stmts);
   ~CompoundStatementNode() = default;
 
   void accept(AstNodeVisitor &p_visitor) override;
-  void print() override;
   void visitChildNodes(AstNodeVisitor &p_visitor);
 
 private:

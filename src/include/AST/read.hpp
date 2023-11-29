@@ -8,12 +8,12 @@
 class ReadNode : public AstNode
 {
 public:
-  ReadNode(const uint32_t line, const uint32_t col,
+  ReadNode(const uint32_t line,
+           const uint32_t col,
            AstNode *p_variable_ref);
   ~ReadNode() = default;
 
   void accept(AstNodeVisitor &p_visitor) override;
-  void print() override;
   void visitChildNodes(AstNodeVisitor &p_visitor);
 
 private:

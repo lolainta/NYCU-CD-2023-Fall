@@ -10,7 +10,6 @@ ReadNode::ReadNode(const uint32_t line,
 }
 
 void ReadNode::accept(AstNodeVisitor &p_visitor) { p_visitor.visit(*this); }
-void ReadNode::print() {}
 
 void ReadNode::visitChildNodes(AstNodeVisitor &p_visitor)
 {

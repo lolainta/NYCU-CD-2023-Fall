@@ -8,13 +8,10 @@
 
 class AstDumper final : public AstNodeVisitor
 {
-private:
-  uint32_t m_indentation_stride = 2;
-  uint32_t m_indentation = 0;
 
 public:
-  ~AstDumper() = default;
   AstDumper() = default;
+  ~AstDumper() = default;
 
   void visit(ProgramNode &p_program) override;
   void visit(DeclNode &p_decl) override;
@@ -35,6 +32,9 @@ public:
   void visit(ReturnNode &p_return) override;
 
 private:
+  uint32_t m_indentation_stride = 2;
+  uint32_t m_indentation = 0;
+
   void incrementIndentation();
   void decrementIndentation();
   std::string typeToString(const PType &type);

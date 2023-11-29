@@ -11,7 +11,8 @@
 class FunctionNode : public AstNode
 {
 public:
-  FunctionNode(const uint32_t line, const uint32_t col,
+  FunctionNode(const uint32_t line,
+               const uint32_t col,
                const char *name,
                std::vector<AstNode *> *var_decls,
                PType *return_type);
@@ -21,10 +22,9 @@ public:
   const PType &getReturnType() const;
   const std::vector<DeclNode *> &getVarDecls() const;
   void setBody(AstNode *body);
-  void visitChildNodes(AstNodeVisitor &p_visitor);
 
   void accept(AstNodeVisitor &p_visitor) override;
-  void print() override;
+  void visitChildNodes(AstNodeVisitor &p_visitor);
 
 private:
   std::string name;
