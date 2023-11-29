@@ -3,8 +3,15 @@
 
 DeclNode::DeclNode(const uint32_t line,
                    const uint32_t col,
-                   std::vector<VariableNode *> *p_var_list)
-    : AstNode{line, col}, var_list(p_var_list) {}
+                   std::vector<AstNode *> *p_var_list)
+    : AstNode{line, col}
+{
+    var_list = new std::vector<VariableNode *>();
+    for (auto &var : *p_var_list)
+    {
+        var_list->push_back(dynamic_cast<VariableNode *>(var));
+    }
+}
 
 std::vector<PType> DeclNode::getTypes()
 {

@@ -13,7 +13,7 @@ class DeclNode : public AstNode
 public:
   DeclNode(const uint32_t line,
            const uint32_t col,
-           std::vector<VariableNode *> *p_var_list);
+           std::vector<AstNode *> *p_var_list);
   ~DeclNode() = default;
 
   std::vector<PType> getTypes();

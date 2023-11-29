@@ -230,7 +230,7 @@ FormalArgs:
 
 FormalArg:
     IdList COLON Type {
-        auto var_nodes = new std::vector<VariableNode *>();
+        auto var_nodes = new std::vector<AstNode *>();
         for (auto &var : *$1) {
             auto vnode = static_cast<VariableNode *>(var);
             vnode->setType(*static_cast<PType*>($3));
@@ -264,7 +264,7 @@ ReturnType:
 
 Declaration:
     VAR IdList COLON Type SEMICOLON {
-        auto var_nodes = new std::vector<VariableNode *>();
+        auto var_nodes = new std::vector<AstNode *>();
         for (auto &var : *$2) {
             auto vnode = static_cast<VariableNode *>(var);
             vnode->setType(*static_cast<PType*>($4));
@@ -275,7 +275,7 @@ Declaration:
     |
     VAR IdList COLON LiteralConstant SEMICOLON {
         auto literal = (ConstantValueNode *)($4);
-        auto var_nodes = new std::vector<VariableNode *>();
+        auto var_nodes = new std::vector<AstNode *>();
         for (auto &var : *$2) {
             auto vnode = static_cast<VariableNode *>(var);
             vnode->setType(literal->getType());
@@ -486,7 +486,7 @@ For:
     CompoundStatement
     END DO {
         auto var =  new VariableNode(@2.first_line, @2.first_column, new PType(SType::int_t), $2);
-        auto decl = new DeclNode(@2.first_line, @2.first_column, new std::vector<VariableNode *>({var}));
+        auto decl = new DeclNode(@2.first_line, @2.first_column, new std::vector<AstNode *>({var}));
         auto var_ref = new VariableReferenceNode(@2.first_line, @2.first_column, new std::string(var->getName()), new std::vector<AstNode *>());
         auto init = new AssignmentNode(@3.first_line, @3.first_column, var_ref, new ConstantValueNode(@4.first_line, @4.first_column, PType(SType::int_t), "", $4, 0, 0));
         auto cnst = new ConstantValueNode(@6.first_line, @6.first_column, PType(SType::int_t), "", $6, 0, 0);
