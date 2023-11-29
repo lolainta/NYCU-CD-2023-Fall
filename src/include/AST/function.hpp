@@ -14,7 +14,7 @@ class FunctionNode : public AstNode
 public:
   FunctionNode(const uint32_t line,
                const uint32_t col,
-               const char *name,
+               std::string *name,
                std::vector<AstNode *> *var_decls,
                PType *return_type);
   ~FunctionNode() = default;

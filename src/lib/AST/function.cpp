@@ -2,10 +2,10 @@
 
 FunctionNode::FunctionNode(const uint32_t line,
                            const uint32_t col,
-                           const char *name,
+                           std::string *name,
                            std::vector<AstNode *> *var_decls,
                            PType *return_type)
-    : AstNode{line, col}, name(name), return_type(*return_type)
+    : AstNode{line, col}, name(*name), return_type(*return_type)
 {
     for (auto &decl : *var_decls)
     {

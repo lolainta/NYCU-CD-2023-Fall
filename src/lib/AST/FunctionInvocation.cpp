@@ -2,9 +2,9 @@
 
 FunctionInvocationNode::FunctionInvocationNode(const uint32_t line,
                                                const uint32_t col,
-                                               const char *p_name,
+                                               std::string *p_name,
                                                std::vector<AstNode *> *p_expressions)
-    : ExpressionNode{line, col}, name(p_name)
+    : ExpressionNode{line, col}, name(*p_name)
 {
     for (auto &expr : *p_expressions)
     {

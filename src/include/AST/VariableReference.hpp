@@ -11,7 +11,7 @@ class VariableReferenceNode : public ExpressionNode
 {
 public:
   VariableReferenceNode(const uint32_t line, const uint32_t col,
-                        const char *p_name,
+                        std::string *p_name,
                         std::vector<AstNode *> *p_expressions);
   ~VariableReferenceNode() = default;
 

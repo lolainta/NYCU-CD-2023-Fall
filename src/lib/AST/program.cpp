@@ -2,11 +2,11 @@
 
 ProgramNode::ProgramNode(const uint32_t line,
                          const uint32_t col,
-                         const char *const p_name,
+                         std::string *p_name,
                          std::vector<AstNode *> *p_var_decls,
                          std::vector<AstNode *> *p_func_decls,
                          AstNode *p_body)
-    : AstNode{line, col}, name(p_name)
+    : AstNode{line, col}, name(*p_name)
 {
     for (auto &decl : *p_var_decls)
     {

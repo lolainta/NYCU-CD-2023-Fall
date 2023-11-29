@@ -6,6 +6,7 @@
 #include "visitor/AstNodeVisitor.hpp"
 
 #include <cstring>
+#include <string>
 
 class ConstantValueNode : public ExpressionNode
 {

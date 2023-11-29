@@ -59,11 +59,11 @@ extern int yylex_destroy(void);
     /* For yylval */
 %union {
     /* basic semantic value */
-    char *identifier;
+    std::string *identifier;
     int32_t integer;
     double real;
     bool boolean;
-    char *str;
+    std::string *str;
     std::vector<std::string> *str_list;
     AstNode *node;
     std::vector<AstNode*> *node_list;
@@ -123,9 +123,7 @@ ProgramUnit:
 
 Program:
     ProgramName SEMICOLON
-    /* ProgramBody */
     DeclarationList FunctionList CompoundStatement
-    /* End of ProgramBody */
     END {
         root = new ProgramNode(@1.first_line, @1.first_column, $1, $3, $4, $5);
         free($1);
@@ -245,12 +243,12 @@ FormalArg:
 IdList:
     ID {
         $$ = new std::vector<AstNode*>();
-        $$->push_back(new VariableNode(@1.first_line, @1.first_column, PType(SType::unknown_t), $1));
+        $$->push_back(new VariableNode(@1.first_line, @1.first_column, new PType(SType::unknown_t), $1));
     }
     |
     IdList COMMA ID {
         $$ = $1;
-        $$->push_back(new VariableNode(@3.first_line, @3.first_column, PType(SType::unknown_t), $3));
+        $$->push_back(new VariableNode(@3.first_line, @3.first_column, new PType(SType::unknown_t), $3));
     }
 ;
 
@@ -366,7 +364,7 @@ NegOrNot:
 
 StringAndBoolean:
     STRING_LITERAL {
-        $$ = new ConstantValueNode(@1.first_line, @1.first_column, PType(SType::string_t), $1, 0, 0, 0);
+        $$ = new ConstantValueNode(@1.first_line, @1.first_column, PType(SType::string_t), $1->c_str(), 0, 0, 0);
     }
     |
     TRUE {
@@ -487,9 +485,9 @@ For:
     FOR ID ASSIGN INT_LITERAL TO INT_LITERAL DO
     CompoundStatement
     END DO {
-        auto var =  new VariableNode(@2.first_line, @2.first_column, PType(SType::int_t), $2);
+        auto var =  new VariableNode(@2.first_line, @2.first_column, new PType(SType::int_t), $2);
         auto decl = new DeclNode(@2.first_line, @2.first_column, new std::vector<VariableNode *>({var}));
-        auto var_ref = new VariableReferenceNode(@2.first_line, @2.first_column, var->getName().c_str(), new std::vector<AstNode *>());
+        auto var_ref = new VariableReferenceNode(@2.first_line, @2.first_column, new std::string(var->getName()), new std::vector<AstNode *>());
         auto init = new AssignmentNode(@3.first_line, @3.first_column, var_ref, new ConstantValueNode(@4.first_line, @4.first_column, PType(SType::int_t), "", $4, 0, 0));
         auto cnst = new ConstantValueNode(@6.first_line, @6.first_column, PType(SType::int_t), "", $6, 0, 0);
         $$ = new ForNode(@1.first_line, @1.first_column, decl, init, cnst, $8);

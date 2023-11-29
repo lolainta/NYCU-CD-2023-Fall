@@ -2,10 +2,10 @@
 
 VariableNode::VariableNode(const uint32_t line,
                            const uint32_t col,
-                           PType type,
-                           const char *name)
-    : AstNode{line, col}, type(type), name(name), const_val(nullptr){};
-std::string VariableNode::getName() const { return this->name; }
+                           PType *type,
+                           std::string *name)
+    : AstNode{line, col}, type(*type), name(*name), const_val(nullptr){};
+const std::string &VariableNode::getName() const { return this->name; }
 const PType &VariableNode::getType() const { return this->type; }
 void VariableNode::setType(const PType &type) { this->type = type; }
 void VariableNode::setConstVal(ConstantValueNode *const_val) { this->const_val = const_val; }

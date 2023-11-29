@@ -13,7 +13,7 @@ class FunctionInvocationNode : public ExpressionNode
 public:
   FunctionInvocationNode(const uint32_t line,
                          const uint32_t col,
-                         const char *p_name,
+                         std::string *p_name,
                          std::vector<AstNode *> *p_expressions);
   ~FunctionInvocationNode() = default;
 

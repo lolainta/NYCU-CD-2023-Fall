@@ -13,11 +13,11 @@ class VariableNode : public AstNode
 public:
   VariableNode(const uint32_t line,
                const uint32_t col,
-               PType type,
-               const char *name);
+               PType *type,
+               std::string *name);
   ~VariableNode() = default;
 
-  std::string getName() const;
+  const std::string &getName() const;
   const PType &getType() const;
   void setType(const PType &type);
   void setConstVal(ConstantValueNode *const_val);
