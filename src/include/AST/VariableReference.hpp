@@ -2,21 +2,30 @@
 #define __AST_VARIABLE_REFERENCE_NODE_H
 
 #include "AST/expression.hpp"
+#include "visitor/AstNodeVisitor.hpp"
+#include <string>
+#include <vector>
 
-class VariableReferenceNode : public ExpressionNode {
-  public:
-    // normal reference
-    VariableReferenceNode(const uint32_t line, const uint32_t col
-                          /* TODO: name */);
-    // array reference
-    // VariableReferenceNode(const uint32_t line, const uint32_t col
-    //                       /* TODO: name, expressions */);
-    ~VariableReferenceNode() = default;
+class VariableReferenceNode : public ExpressionNode
+{
+public:
+  // normal reference
+  VariableReferenceNode(const uint32_t line, const uint32_t col,
+                        const char *p_name,
+                        std::vector<AstNode *> *p_expressions);
+  // array reference
+  // VariableReferenceNode(const uint32_t line, const uint32_t col
+  //                       /* TODO: name, expressions */);
+  ~VariableReferenceNode() = default;
+  const char *getNameCString() const;
 
-    void print() override;
+  void accept(AstNodeVisitor &p_visitor) override;
+  void print() override;
+  void visitChildNodes(AstNodeVisitor &p_visitor);
 
-  private:
-    // TODO: variable name, expressions
+private:
+  std::string name;
+  std::vector<ExpressionNode *> expressions;
 };
 
 #endif
