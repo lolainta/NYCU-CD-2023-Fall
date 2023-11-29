@@ -1,5 +1,5 @@
-#ifndef AST_PROGRAM_NODE_H
-#define AST_PROGRAM_NODE_H
+#ifndef __AST_PROGRAM_NODE_H
+#define __AST_PROGRAM_NODE_H
 
 #include "AST/ast.hpp"
 #include "AST/decl.hpp"

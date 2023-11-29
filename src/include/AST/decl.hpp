@@ -1,13 +1,13 @@
 #ifndef __AST_DECL_NODE_H
 #define __AST_DECL_NODE_H
 
-#include <vector>
-
 #include "AST/ast.hpp"
 #include "AST/variable.hpp"
 #include "visitor/AstNodeVisitor.hpp"
 #include "enums.hpp"
+
 #include <vector>
+
 class DeclNode : public AstNode
 {
 public:

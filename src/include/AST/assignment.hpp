@@ -5,6 +5,7 @@
 #include "AST/VariableReference.hpp"
 #include "AST/expression.hpp"
 #include "visitor/AstNodeVisitor.hpp"
+
 #include <vector>
 
 class AssignmentNode : public AstNode

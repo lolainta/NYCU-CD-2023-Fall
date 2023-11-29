@@ -1,6 +1,5 @@
 #include "AST/CompoundStatement.hpp"
 
-// TODO
 CompoundStatementNode::CompoundStatementNode(const uint32_t line,
                                              const uint32_t col,
                                              std::vector<AstNode *> *decls,

@@ -1,6 +1,5 @@
 #include "AST/VariableReference.hpp"
 
-// TODO
 VariableReferenceNode::VariableReferenceNode(const uint32_t line,
                                              const uint32_t col,
                                              const char *p_name,

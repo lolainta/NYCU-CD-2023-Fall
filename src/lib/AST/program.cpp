@@ -1,6 +1,5 @@
 #include "AST/program.hpp"
 
-// TODO
 ProgramNode::ProgramNode(const uint32_t line,
                          const uint32_t col,
                          const char *const p_name,
@@ -31,7 +30,7 @@ void ProgramNode::accept(AstNodeVisitor &p_visitor)
 }
 
 void ProgramNode::visitChildNodes(AstNodeVisitor &p_visitor)
-{ // visitor pattern version
+{
     for (auto &decl : var_decls)
     {
         decl->accept(p_visitor);

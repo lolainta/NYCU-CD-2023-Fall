@@ -3,9 +3,9 @@
 
 #include "AST/expression.hpp"
 #include "enums.hpp"
-#include <cstring>
-#include <string.h>
 #include "visitor/AstNodeVisitor.hpp"
+
+#include <cstring>
 
 class ConstantValueNode : public ExpressionNode
 {
@@ -25,7 +25,6 @@ public:
   void accept(AstNodeVisitor &p_visitor) override;
 
 private:
-  // TODO: constant value
   ConstantValue value;
 };
 

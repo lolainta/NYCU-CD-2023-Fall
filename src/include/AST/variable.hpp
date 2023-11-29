@@ -5,6 +5,7 @@
 #include "AST/ConstantValue.hpp"
 #include "visitor/AstNodeVisitor.hpp"
 #include "enums.hpp"
+
 #include <string>
 
 class VariableNode : public AstNode
@@ -25,8 +26,8 @@ public:
   void visitChildNodes(AstNodeVisitor &p_visitor);
 
 private:
-  std::string name;
   PType type;
+  std::string name;
   ConstantValueNode *const_val;
 };
 

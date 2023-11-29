@@ -5,8 +5,9 @@
 #include "AST/decl.hpp"
 #include "AST/CompoundStatement.hpp"
 #include "enums.hpp"
-#include <vector>
+
 #include <string>
+#include <vector>
 
 class FunctionNode : public AstNode
 {

@@ -4,7 +4,6 @@
 #include "AST/expression.hpp"
 #include "visitor/AstNodeVisitor.hpp"
 #include "enums.hpp"
-#include <memory>
 
 class BinaryOperatorNode : public ExpressionNode
 {

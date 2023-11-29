@@ -1,6 +1,5 @@
 #include "AST/for.hpp"
 
-// TODO
 ForNode::ForNode(const uint32_t line,
                  const uint32_t col,
                  AstNode *p_decl,

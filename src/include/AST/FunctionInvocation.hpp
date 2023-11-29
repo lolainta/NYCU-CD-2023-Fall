@@ -4,7 +4,10 @@
 #include "AST/expression.hpp"
 #include "visitor/AstNodeVisitor.hpp"
 #include "enums.hpp"
+
 #include <string>
+#include <vector>
+
 class FunctionInvocationNode : public ExpressionNode
 {
 public:

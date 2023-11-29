@@ -1,5 +1,5 @@
-#ifndef AST_AST_NODE_H
-#define AST_AST_NODE_H
+#ifndef __AST_AST_NODE_H
+#define __AST_AST_NODE_H
 
 #include <cstdint>
 

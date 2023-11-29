@@ -1,11 +1,10 @@
 #include "AST/variable.hpp"
 
-// TODO
 VariableNode::VariableNode(const uint32_t line,
                            const uint32_t col,
                            PType type,
                            const char *name)
-    : AstNode{line, col}, type(type), name(name), const_val(nullptr) {}
+    : AstNode{line, col}, type(type), name(name), const_val(nullptr){};
 std::string VariableNode::getName() const { return this->name; }
 const PType &VariableNode::getType() const { return this->type; }
 void VariableNode::setType(const PType &type) { this->type = type; }

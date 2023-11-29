@@ -20,19 +20,8 @@ void DeclNode::accept(AstNodeVisitor &p_visitor) { p_visitor.visit(*this); }
 
 void DeclNode::visitChildNodes(AstNodeVisitor &p_visitor)
 {
-    // TODO
     for (auto &id : *var_list)
     {
         id->accept(p_visitor);
     }
-    /* TODO
-     *
-     * for (auto &decl : var_decls) {
-     *     decl->accept(p_visitor);
-     * }
-     *
-     * // functions
-     *
-     * body->accept(p_visitor);
-     */
 }
