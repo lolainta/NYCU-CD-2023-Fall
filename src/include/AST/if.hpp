@@ -9,14 +9,14 @@
 class IfNode : public AstNode
 {
 public:
-  IfNode(const uint32_t line, const uint32_t col,
+  IfNode(const uint32_t line,
+         const uint32_t col,
          AstNode *p_expression,
          AstNode *p_compound_statement1,
          AstNode *p_compound_statement2);
   ~IfNode() = default;
 
   void accept(AstNodeVisitor &p_visitor) override;
-  void print() override;
   void visitChildNodes(AstNodeVisitor &p_visitor);
 
 private:

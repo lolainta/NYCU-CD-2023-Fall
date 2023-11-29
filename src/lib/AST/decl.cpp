@@ -1,10 +1,16 @@
 #include "AST/decl.hpp"
 #include <cassert>
 
-DeclNode::DeclNode(const uint32_t line, const uint32_t col, std::vector<VariableNode *> *p_var_list)
+DeclNode::DeclNode(const uint32_t line,
+                   const uint32_t col,
+                   std::vector<AstNode *> *p_var_list)
     : AstNode{line, col}
 {
-    this->var_list = p_var_list;
+    var_list = new std::vector<VariableNode *>();
+    for (auto &var : *p_var_list)
+    {
+        var_list->push_back(dynamic_cast<VariableNode *>(var));
+    }
 }
 
 std::vector<PType> DeclNode::getTypes()
@@ -17,25 +23,12 @@ std::vector<PType> DeclNode::getTypes()
     return types;
 }
 
-// TODO: You may use code snippets in AstDumper.cpp
 void DeclNode::accept(AstNodeVisitor &p_visitor) { p_visitor.visit(*this); }
-void DeclNode::print() {}
 
 void DeclNode::visitChildNodes(AstNodeVisitor &p_visitor)
 {
-    // TODO
     for (auto &id : *var_list)
     {
         id->accept(p_visitor);
     }
-    /* TODO
-     *
-     * for (auto &decl : var_decls) {
-     *     decl->accept(p_visitor);
-     * }
-     *
-     * // functions
-     *
-     * body->accept(p_visitor);
-     */
 }

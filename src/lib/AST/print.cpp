@@ -1,6 +1,7 @@
 #include "AST/print.hpp"
 
-PrintNode::PrintNode(const uint32_t line, const uint32_t col,
+PrintNode::PrintNode(const uint32_t line,
+                     const uint32_t col,
                      AstNode *p_expr)
     : AstNode{line, col}
 {
@@ -11,7 +12,6 @@ void PrintNode::accept(AstNodeVisitor &p_visitor)
 {
     p_visitor.visit(*this);
 }
-void PrintNode::print() {}
 
 void PrintNode::visitChildNodes(AstNodeVisitor &p_visitor)
 {

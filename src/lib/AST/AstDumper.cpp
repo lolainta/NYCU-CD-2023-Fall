@@ -82,7 +82,6 @@ void AstDumper::visit(ConstantValueNode &p_constant_value)
 {
     outputIndentationSpace(m_indentation);
 
-    // TODO: string of constant value
     std::printf("constant <line: %u, col: %u> %s\n",
                 p_constant_value.getLocation().line,
                 p_constant_value.getLocation().col,

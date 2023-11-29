@@ -39,11 +39,8 @@ static void appendToCurrentLine(const char *yytext_ptr);
 integer 0|[1-9][0-9]*
 float {integer}\.(0|[0-9]*[1-9])
 nonzero_integer [1-9][0-9]*
-    /* If the integral part is nonzero, then the fractional part can be either zero
-    or not. However, if the integral part is zero, the fractional part cannot be zero. */
 nonzero_float ({nonzero_integer}\.(0|[0-9]*[1-9]))|(0\.([0-9]*[1-9]))
 
-    /* exclusive start condition */
 %x CCOMMENT
 
 %%
@@ -107,7 +104,8 @@ nonzero_float ({nonzero_integer}\.(0|[0-9]*[1-9]))|(0\.([0-9]*[1-9]))
     /* Identifier */
 [a-zA-Z][a-zA-Z0-9]* {
     LIST_LITERAL("id", yytext);
-    yylval.identifier = strndup(yytext, MAX_ID_LENG);
+    // yylval.identifier = strndup(yytext, MAX_ID_LENG);
+    yylval.str = new std::string(yytext);
     return ID;
 }
 
@@ -160,7 +158,7 @@ nonzero_float ({nonzero_integer}\.(0|[0-9]*[1-9]))|(0\.([0-9]*[1-9]))
     }
     *str_ptr = '\0';
     LIST_LITERAL("string", string_literal);
-    yylval.str = strdup(string_literal);
+    yylval.str = new std::string(string_literal);
     return STRING_LITERAL;
 }
 

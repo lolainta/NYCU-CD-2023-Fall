@@ -1,5 +1,5 @@
-#ifndef AST_AST_NODE_H
-#define AST_AST_NODE_H
+#ifndef __AST_AST_NODE_H
+#define __AST_AST_NODE_H
 
 #include <cstdint>
 
@@ -10,8 +10,9 @@ struct Location
   uint32_t line;
   uint32_t col;
 
+  Location(const uint32_t line,
+           const uint32_t col) : line(line), col(col) {}
   ~Location() = default;
-  Location(const uint32_t line, const uint32_t col) : line(line), col(col) {}
 };
 
 class AstNode
@@ -20,13 +21,13 @@ protected:
   Location location;
 
 public:
+  AstNode(const uint32_t line,
+          const uint32_t col);
   virtual ~AstNode() = 0;
-  AstNode(const uint32_t line, const uint32_t col);
 
   const Location &getLocation() const;
 
   virtual void accept(AstNodeVisitor &p_visitor) = 0;
-  virtual void print() = 0;
 };
 
 #endif

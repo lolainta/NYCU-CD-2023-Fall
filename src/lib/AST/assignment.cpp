@@ -1,6 +1,5 @@
 #include "AST/assignment.hpp"
 
-// TODO
 AssignmentNode::AssignmentNode(const uint32_t line,
                                const uint32_t col,
                                AstNode *p_variable_ref,
@@ -12,7 +11,6 @@ AssignmentNode::AssignmentNode(const uint32_t line,
 }
 
 void AssignmentNode::accept(AstNodeVisitor &p_visitor) { p_visitor.visit(*this); }
-void AssignmentNode::print() {}
 
 void AssignmentNode::visitChildNodes(AstNodeVisitor &p_visitor)
 {

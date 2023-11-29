@@ -5,6 +5,7 @@
 #include "AST/VariableReference.hpp"
 #include "AST/expression.hpp"
 #include "visitor/AstNodeVisitor.hpp"
+
 #include <vector>
 
 class AssignmentNode : public AstNode
@@ -17,7 +18,6 @@ public:
   ~AssignmentNode() = default;
 
   void accept(AstNodeVisitor &p_visitor) override;
-  void print() override;
   void visitChildNodes(AstNodeVisitor &p_visitor);
 
 private:

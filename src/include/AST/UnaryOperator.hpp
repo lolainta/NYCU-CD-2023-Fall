@@ -8,12 +8,14 @@
 class UnaryOperatorNode : public ExpressionNode
 {
 public:
-  UnaryOperatorNode(const uint32_t line, const uint32_t col, Operator op, AstNode *expr);
+  UnaryOperatorNode(const uint32_t line,
+                    const uint32_t col,
+                    Operator op,
+                    AstNode *expr);
   ~UnaryOperatorNode() = default;
 
   Operator getOperator() const;
   void accept(AstNodeVisitor &p_visitor) override;
-  void print() override;
   void visitChildNodes(AstNodeVisitor &p_visitor);
 
 private:
