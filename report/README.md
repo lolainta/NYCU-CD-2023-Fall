@@ -49,4 +49,4 @@ The rest of them are not that hard. I just need to follow the specification and 
 ## Feedback to T.A.s
 
 - The workflow I provided in homework 2 did not be applied in this project. I hope that we can have it in the next project.
-- Interesting, for the feedback section in the first homework, I requested the colored diff output. And it is implemented in the second homework. And for the second homework, I requested and provided the workflow at the feedback section. However, I am running out of ideas for writing the feedback section in this homework.
+- In this homework, since we need to compile many object files, it is good to use jobserver to speed up the compilation. I had added the `-j` option in the `Makefile` and it works well. The pull request is [here](https://github.com/compiler-f23/hw3-tmpl-contributions-welcome/pull/3/files). I hope that we can use it in the next project.
