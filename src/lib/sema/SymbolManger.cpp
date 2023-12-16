@@ -32,10 +32,6 @@ bool SymbolTable::addSymbol(SymbolEntry entry) {
                    [&entry](const SymbolEntry &a) {
                      return a.name == entry.name && a.level == entry.level;
                    }) != entries.end()) {
-    fprintf(stderr,
-            "<Error> Found in line %d, col %d: symbol '%s' is redeclared\n",
-            entry.node->getLocation().line, entry.node->getLocation().col,
-            entry.name.c_str());
     return false;
   }
   entries.push_back(entry);
@@ -83,9 +79,6 @@ bool SymbolManager::addSymbol(const std::string &name, const std::string &kind,
                    [&name](const std::pair<std::string, int> &a) {
                      return a.first == name;
                    }) != loop_vars.end()) {
-    fprintf(stderr,
-            "<Error> Found in line %d, col %d: symbol '%s' is redeclared\n",
-            node->getLocation().line, node->getLocation().col, name.c_str());
     return false;
   }
   if (kind == "loop_var") {

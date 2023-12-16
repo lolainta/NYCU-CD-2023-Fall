@@ -1,11 +1,46 @@
 #include "sema/SemanticAnalyzer.hpp"
 
 #include <algorithm>
+#include <cassert>
+#include <cstdio>
+#include <fstream>
+#include <iostream>
 
 #include "visitor/AstNodeInclude.hpp"
+
+SemanticAnalyzer::SemanticAnalyzer(const std::string &p_filename)
+    : filename(p_filename) {
+  std::ifstream fin(p_filename.c_str(), std::ios::in);
+  std::string line;
+  while (getline(fin, line)) {
+    lines.push_back(line);
+  }
+  fin.close();
+}
+
+void SemanticAnalyzer::printError(const std::string &msg, const uint32_t line,
+                                  const uint32_t col) const {
+  fprintf(stderr, "<Error> Found in line %d, column %d: %s\n", line, col,
+          msg.c_str());
+  fprintf(stderr, "    %s\n", lines[line - 1].c_str());
+  for (uint32_t i = 0; i < 4 + col - 1; ++i) {
+    fprintf(stderr, " ");
+  }
+  fprintf(stderr, "^\n");
+}
+
+#define ADD_SYBMOL(name, kind, type, attr, node)                               \
+  if (!sm.addSymbol(name, kind, type, attr, node)) {                           \
+    char error_msg[128];                                                       \
+    snprintf(error_msg, sizeof(error_msg), "symbol '%s' is redeclared", name); \
+    printError(error_msg, (node)->getLocation().line,                          \
+               (node)->getLocation().col);                                     \
+    error = true;                                                              \
+  }
+
 void SemanticAnalyzer::visit(ProgramNode &p_program) {
   sm.pushScope();
-  sm.addSymbol(p_program.getNameCString(), "program", "void", &p_program);
+  ADD_SYBMOL(p_program.getNameCString(), "program", "void", "", &p_program);
   p_program.visitChildNodes(*this);
   sm.semanticCheck();
   sm.dumpLastScope();
@@ -16,13 +51,12 @@ void SemanticAnalyzer::visit(DeclNode &p_decl) {
   for_each(p_decl.getVariables().begin(), p_decl.getVariables().end(),
            [&](auto &var_node) {
              if (var_node->isConstant()) {
-               sm.addSymbol(var_node->getNameCString(), "constant",
-                            var_node->getTypeCString(),
-                            var_node->getConstantValueCString(),
-                            var_node.get());
+               ADD_SYBMOL(var_node->getNameCString(), "constant",
+                          var_node->getTypeCString(),
+                          var_node->getConstantValueCString(), var_node.get());
              } else {
-               sm.addSymbol(var_node->getNameCString(), "variable",
-                            var_node->getTypeCString(), var_node.get());
+               ADD_SYBMOL(var_node->getNameCString(), "variable",
+                          var_node->getTypeCString(), "", var_node.get());
              }
            });
 }
@@ -32,17 +66,18 @@ void SemanticAnalyzer::visit(VariableNode &p_variable) {}
 void SemanticAnalyzer::visit(ConstantValueNode &p_constant_value) {}
 
 void SemanticAnalyzer::visit(FunctionNode &p_function) {
-  sm.addSymbol(p_function.getNameCString(), "function",
-               p_function.getReturnTypeCString(),
-               p_function.getParametersTypeCString(), &p_function);
+  ADD_SYBMOL(p_function.getNameCString(), "function",
+             p_function.getReturnTypeCString(),
+             p_function.getParametersTypeCString(), &p_function);
+
   sm.pushScope();
   for_each(p_function.getParameters().begin(), p_function.getParameters().end(),
            [&](auto &param_node) {
              for_each(param_node->getVariables().begin(),
                       param_node->getVariables().end(), [&](auto &var_node) {
-                        sm.addSymbol(var_node->getNameCString(), "parameter",
-                                     var_node->getTypeCString(),
-                                     var_node.get());
+                        ADD_SYBMOL(var_node->getNameCString(), "parameter",
+                                   var_node->getTypeCString(), "",
+                                   var_node.get());
                       });
            });
   p_function.getBody()->visitChildNodes(*this);
@@ -178,8 +213,8 @@ void SemanticAnalyzer::visit(ForNode &p_for) {
   sm.pushScope();
   for_each(p_for.getLoopVarDecl()->getVariables().begin(),
            p_for.getLoopVarDecl()->getVariables().end(), [&](auto &var_node) {
-             sm.addSymbol(var_node->getNameCString(), "loop_var",
-                          var_node->getTypeCString(), var_node.get());
+             ADD_SYBMOL(var_node->getNameCString(), "loop_var",
+                        var_node->getTypeCString(), "", var_node.get());
            });
   sm.pushScope();
   p_for.getBody()->visitChildNodes(*this);

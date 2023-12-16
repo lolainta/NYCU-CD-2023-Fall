@@ -1,6 +1,9 @@
 #ifndef SEMA_SEMANTIC_ANALYZER_H
 #define SEMA_SEMANTIC_ANALYZER_H
 
+#include <string>
+#include <vector>
+
 #include "sema/SymbolManager.hpp"
 #include "visitor/AstNodeVisitor.hpp"
 
@@ -9,10 +12,15 @@ class SemanticAnalyzer final : public AstNodeVisitor {
   // TODO: something like symbol manager (manage symbol tables)
   //       context manager, return type manager
   SymbolManager sm;
+  std::string filename;
+  std::vector<std::string> lines;
+  void printError(const std::string &msg, const uint32_t line,
+                  const uint32_t col) const;
+  bool error = false;
 
  public:
   ~SemanticAnalyzer() = default;
-  SemanticAnalyzer() = default;
+  SemanticAnalyzer(const std::string &p_filename);
 
   void visit(ProgramNode &p_program) override;
   void visit(DeclNode &p_decl) override;
@@ -31,6 +39,8 @@ class SemanticAnalyzer final : public AstNodeVisitor {
   void visit(WhileNode &p_while) override;
   void visit(ForNode &p_for) override;
   void visit(ReturnNode &p_return) override;
+
+  bool hasError() const { return error; }
 };
 
 #endif
