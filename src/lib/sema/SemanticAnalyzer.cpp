@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdio>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 
@@ -66,6 +67,7 @@ void SemanticAnalyzer::visit(VariableNode &p_variable) {
   auto dims = p_variable.getTypeSharedPtr()->getDimensions();
   for (auto dim : dims) {
     if (dim == 0) {
+      sm.getSymbol(p_variable.getNameCString())->error = true;
       char error_msg[128];
       snprintf(
           error_msg, sizeof(error_msg),
@@ -119,6 +121,7 @@ void SemanticAnalyzer::visit(PrintNode &p_print) {
    * 4. Perform semantic analyses of this node.
    * 5. Pop the symbol table pushed at the 1st step.
    */
+  p_print.visitChildNodes(*this);
 }
 
 void SemanticAnalyzer::visit(BinaryOperatorNode &p_bin_op) {
@@ -161,18 +164,49 @@ void SemanticAnalyzer::visit(FunctionInvocationNode &p_func_invocation) {
 }
 
 void SemanticAnalyzer::visit(VariableReferenceNode &p_variable_ref) {
-  /*
-   * TODO:
-   *
-   * 1. Push a new symbol table if this node forms a scope.
-   * 2. Insert the symbol into current symbol table if this node is related to
-   *    declaration (ProgramNode, VariableNode, FunctionNode).
-   * 3. Travere child nodes of this node.
-   * 4. Perform semantic analyses of this node.
-   * 5. Pop the symbol table pushed at the 1st step.
-   */
+  auto sym = sm.getSymbol(p_variable_ref.getNameCString());
+  if (sym == nullptr) {
+    char error_msg[128];
+    snprintf(error_msg, sizeof(error_msg), "use of undeclared symbol '%s'",
+             p_variable_ref.getNameCString());
+    printError(error_msg, p_variable_ref.getLocation().line,
+               p_variable_ref.getLocation().col);
+    error = true;
+  } else if (sym->error) {
+  } else if (sym->kind == "function" || sym->kind == "program") {
+    char error_msg[128];
+    snprintf(error_msg, sizeof(error_msg), "use of non-variable symbol '%s'",
+             p_variable_ref.getNameCString());
+    printError(error_msg, p_variable_ref.getLocation().line,
+               p_variable_ref.getLocation().col);
+    error = true;
+  } else {
+    auto &idxs = p_variable_ref.getIndices();
+    for (auto &_idx : idxs) {
+      auto idx = dynamic_cast<ConstantValueNode *>(_idx.get());
+      if (strncmp(idx->getTypeSharedPtr()->getPTypeCString(), "integer", 7)) {
+        char error_msg[128];
+        snprintf(error_msg, sizeof(error_msg),
+                 "index of array reference must be an integer");
+        printError(error_msg, idx->getLocation().line, idx->getLocation().col);
+        error = true;
+        return;
+      }
+    }
 
-  p_variable_ref.visitChildNodes(*this);
+    auto var_node = dynamic_cast<VariableNode *>(sym->node);
+    auto dims = var_node->getTypeSharedPtr()->getDimensions();
+    if (dims.size() < idxs.size()) {
+      char error_msg[128];
+      snprintf(error_msg, sizeof(error_msg),
+               "there is an over array subscript on '%s'",
+               p_variable_ref.getNameCString());
+      printError(error_msg, p_variable_ref.getLocation().line,
+                 p_variable_ref.getLocation().col);
+      error = true;
+      return;
+    }
+  }
 }
 
 void SemanticAnalyzer::visit(AssignmentNode &p_assignment) {

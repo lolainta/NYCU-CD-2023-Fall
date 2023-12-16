@@ -8,6 +8,7 @@
 class SymbolEntry {
   friend class SymbolTable;
   friend class SymbolManager;
+  friend class SemanticAnalyzer;
 
  public:
   SymbolEntry(const std::string &name, const std::string &kind, int level,
@@ -35,6 +36,7 @@ class SymbolEntry {
   std::string type;
   std::string attribute;
   AstNode *node;
+  bool error = false;
 };
 
 class SymbolTable {

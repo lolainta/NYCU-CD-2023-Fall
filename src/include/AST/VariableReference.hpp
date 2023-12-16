@@ -33,6 +33,8 @@ class VariableReferenceNode final : public ExpressionNode {
 
   const char *getNameCString() const { return m_name.c_str(); }
 
+  const ExprNodes &getIndices() const { return m_indices; }
+
   void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
   void visitChildNodes(AstNodeVisitor &p_visitor) override;
 };
