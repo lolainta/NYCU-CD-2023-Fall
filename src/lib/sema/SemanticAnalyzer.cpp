@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 
+#include "AST/PType.hpp"
 #include "visitor/AstNodeInclude.hpp"
 
 SemanticAnalyzer::SemanticAnalyzer(const std::string &p_filename)
@@ -59,9 +60,25 @@ void SemanticAnalyzer::visit(DeclNode &p_decl) {
                           var_node->getTypeCString(), "", var_node.get());
              }
            });
+  p_decl.visitChildNodes(*this);
 }
 
-void SemanticAnalyzer::visit(VariableNode &p_variable) {}
+void SemanticAnalyzer::visit(VariableNode &p_variable) {
+  auto dims = p_variable.getTypeSharedPtr()->getDimensions();
+  for (auto dim : dims) {
+    if (dim == 0) {
+      char error_msg[128];
+      snprintf(
+          error_msg, sizeof(error_msg),
+          "'%s' declared as an array with an index that is not greater than 0",
+          p_variable.getNameCString());
+      printError(error_msg, p_variable.getLocation().line,
+                 p_variable.getLocation().col);
+      error = true;
+    }
+  }
+  p_variable.visitChildNodes(*this);
+}
 
 void SemanticAnalyzer::visit(ConstantValueNode &p_constant_value) {}
 
@@ -155,6 +172,7 @@ void SemanticAnalyzer::visit(VariableReferenceNode &p_variable_ref) {
    * 4. Perform semantic analyses of this node.
    * 5. Pop the symbol table pushed at the 1st step.
    */
+  p_variable_ref.visitChildNodes(*this);
 }
 
 void SemanticAnalyzer::visit(AssignmentNode &p_assignment) {

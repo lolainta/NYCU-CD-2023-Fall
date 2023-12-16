@@ -34,6 +34,7 @@ class VariableNode final : public AstNode {
     return m_constant_value_node_ptr->getConstantValueCString();
   }
   bool isConstant() const { return m_constant_value_node_ptr != nullptr; }
+  const PTypeSharedPtr &getTypeSharedPtr() const { return m_type; }
 
   void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
   void visitChildNodes(AstNodeVisitor &p_visitor) override;

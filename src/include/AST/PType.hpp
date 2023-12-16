@@ -32,7 +32,7 @@ class PType {
   void setDimensions(std::vector<uint64_t> &p_dims) {
     m_dimensions = std::move(p_dims);
   }
-
+  const std::vector<uint64_t> &getDimensions() const { return m_dimensions; }
   PrimitiveTypeEnum getPrimitiveType() const { return m_type; }
   const char *getPTypeCString() const;
 };
