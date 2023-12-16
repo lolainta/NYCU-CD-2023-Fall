@@ -21,6 +21,8 @@ class FunctionNode final : public AstNode {
 
   mutable std::string m_prototype_string;
   mutable bool m_prototype_string_is_valid = false;
+  mutable std::string m_parameters_type_string;
+  mutable bool m_parameters_type_string_is_valid = false;
 
  public:
   ~FunctionNode() = default;
@@ -34,7 +36,11 @@ class FunctionNode final : public AstNode {
         m_body(p_body) {}
 
   const char *getNameCString() const { return m_name.c_str(); }
+  const char *getReturnTypeCString() const;
+  const char *getParametersTypeCString() const;
+  CompoundStatementNode *getBody() const { return m_body.get(); }
   const char *getPrototypeCString() const;
+  const DeclNodes &getParameters() const { return m_parameters; }
 
   void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
   void visitChildNodes(AstNodeVisitor &p_visitor) override;

@@ -26,6 +26,10 @@ class ForNode final : public AstNode {
         m_body(p_body) {}
 
   void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
+  DeclNode *getLoopVarDecl() const { return m_loop_var_decl.get(); }
+  AssignmentNode *getInitStmt() const { return m_init_stmt.get(); }
+  ExpressionNode *getEndCondition() const { return m_end_condition.get(); }
+  CompoundStatementNode *getBody() const { return m_body.get(); }
   void visitChildNodes(AstNodeVisitor &p_visitor) override;
 };
 

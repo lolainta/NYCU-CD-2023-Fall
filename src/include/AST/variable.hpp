@@ -27,6 +27,13 @@ class VariableNode final : public AstNode {
 
   const char *getNameCString() const { return m_name.c_str(); }
   const char *getTypeCString() const { return m_type->getPTypeCString(); }
+  const char *getConstantValueCString() const {
+    if (m_constant_value_node_ptr == nullptr) {
+      return "";
+    }
+    return m_constant_value_node_ptr->getConstantValueCString();
+  }
+  bool isConstant() const { return m_constant_value_node_ptr != nullptr; }
 
   void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
   void visitChildNodes(AstNodeVisitor &p_visitor) override;

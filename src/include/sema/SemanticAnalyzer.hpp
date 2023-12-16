@@ -1,12 +1,14 @@
 #ifndef SEMA_SEMANTIC_ANALYZER_H
 #define SEMA_SEMANTIC_ANALYZER_H
 
+#include "sema/SymbolManager.hpp"
 #include "visitor/AstNodeVisitor.hpp"
 
 class SemanticAnalyzer final : public AstNodeVisitor {
  private:
   // TODO: something like symbol manager (manage symbol tables)
   //       context manager, return type manager
+  SymbolManager sm;
 
  public:
   ~SemanticAnalyzer() = default;

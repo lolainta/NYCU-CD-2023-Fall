@@ -22,6 +22,19 @@ static std::string getParametersTypeString(
   return type_string;
 }
 
+const char *FunctionNode::getReturnTypeCString() const {
+  return m_ret_type->getPTypeCString();
+}
+
+const char *FunctionNode::getParametersTypeCString() const {
+  if (!m_parameters_type_string_is_valid) {
+    m_parameters_type_string = getParametersTypeString(m_parameters);
+    m_parameters_type_string_is_valid = true;
+  }
+
+  return m_parameters_type_string.c_str();
+}
+
 const char *FunctionNode::getPrototypeCString() const {
   if (!m_prototype_string_is_valid) {
     m_prototype_string = m_ret_type->getPTypeCString();
