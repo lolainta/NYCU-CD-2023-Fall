@@ -770,6 +770,7 @@ int main(int argc, const char *argv[]) {
     yyparse();
 
     if (argc >= 3 && strcmp(argv[2], "--dump-ast") == 0) {
+    /* if (true) { */
         AstDumper ast_dumper;
         root->accept(ast_dumper);
     }

@@ -5,8 +5,9 @@
 #include "visitor/AstNodeInclude.hpp"
 void SemanticAnalyzer::visit(ProgramNode &p_program) {
   sm.pushScope();
-  sm.addSymbol(p_program.getNameCString(), "program", "void");
+  sm.addSymbol(p_program.getNameCString(), "program", "void", &p_program);
   p_program.visitChildNodes(*this);
+  sm.semanticCheck();
   sm.dumpLastScope();
   sm.popScope();
 }
@@ -17,10 +18,11 @@ void SemanticAnalyzer::visit(DeclNode &p_decl) {
              if (var_node->isConstant()) {
                sm.addSymbol(var_node->getNameCString(), "constant",
                             var_node->getTypeCString(),
-                            var_node->getConstantValueCString());
+                            var_node->getConstantValueCString(),
+                            var_node.get());
              } else {
                sm.addSymbol(var_node->getNameCString(), "variable",
-                            var_node->getTypeCString());
+                            var_node->getTypeCString(), var_node.get());
              }
            });
 }
@@ -32,14 +34,15 @@ void SemanticAnalyzer::visit(ConstantValueNode &p_constant_value) {}
 void SemanticAnalyzer::visit(FunctionNode &p_function) {
   sm.addSymbol(p_function.getNameCString(), "function",
                p_function.getReturnTypeCString(),
-               p_function.getParametersTypeCString());
+               p_function.getParametersTypeCString(), &p_function);
   sm.pushScope();
   for_each(p_function.getParameters().begin(), p_function.getParameters().end(),
            [&](auto &param_node) {
              for_each(param_node->getVariables().begin(),
                       param_node->getVariables().end(), [&](auto &var_node) {
                         sm.addSymbol(var_node->getNameCString(), "parameter",
-                                     var_node->getTypeCString());
+                                     var_node->getTypeCString(),
+                                     var_node.get());
                       });
            });
   p_function.getBody()->visitChildNodes(*this);
@@ -176,11 +179,9 @@ void SemanticAnalyzer::visit(ForNode &p_for) {
   for_each(p_for.getLoopVarDecl()->getVariables().begin(),
            p_for.getLoopVarDecl()->getVariables().end(), [&](auto &var_node) {
              sm.addSymbol(var_node->getNameCString(), "loop_var",
-                          var_node->getTypeCString());
+                          var_node->getTypeCString(), var_node.get());
            });
   sm.pushScope();
-  p_for.getInitStmt()->visitChildNodes(*this);
-  p_for.getEndCondition()->visitChildNodes(*this);
   p_for.getBody()->visitChildNodes(*this);
   sm.dumpLastScope();
   sm.popScope();
