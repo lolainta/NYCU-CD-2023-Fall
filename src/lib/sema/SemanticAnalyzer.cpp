@@ -43,7 +43,6 @@ void SemanticAnalyzer::visit(ProgramNode &p_program) {
   sm.pushScope();
   ADD_SYBMOL(p_program.getNameCString(), "program", "void", "", &p_program);
   p_program.visitChildNodes(*this);
-  sm.semanticCheck();
   sm.dumpLastScope();
   sm.popScope();
 }
@@ -172,6 +171,7 @@ void SemanticAnalyzer::visit(VariableReferenceNode &p_variable_ref) {
    * 4. Perform semantic analyses of this node.
    * 5. Pop the symbol table pushed at the 1st step.
    */
+
   p_variable_ref.visitChildNodes(*this);
 }
 

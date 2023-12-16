@@ -7,6 +7,7 @@
 #include "AST/ast.hpp"
 class SymbolEntry {
   friend class SymbolTable;
+  friend class SymbolManager;
 
  public:
   SymbolEntry(const std::string &name, const std::string &kind, int level,
@@ -43,7 +44,14 @@ class SymbolTable {
   SymbolTable() = default;
   bool addSymbol(SymbolEntry entry);
   void dump();
-  bool semanticCheck();
+  SymbolEntry *getSymbol(const std::string &name) {
+    for (auto it = entries.rbegin(); it != entries.rend(); it++) {
+      if (it->name == name) {
+        return &(*it);
+      }
+    }
+    return nullptr;
+  }
 
  private:
   std::vector<SymbolEntry> entries;
@@ -58,9 +66,16 @@ class SymbolManager {
   bool addSymbol(const std::string &, const std::string &, const std::string &,
                  AstNode *);
   void dumpLastScope();
-  void semanticCheck();
+  SymbolEntry *getSymbol(const std::string &name) {
+    for (auto it = tables.rbegin(); it != tables.rend(); it++) {
+      auto symbol = (*it)->getSymbol(name);
+      if (symbol != nullptr) {
+        return symbol;
+      }
+    }
+    return nullptr;
+  }
 
  private:
-  std::stack<SymbolTable *> tables;
-  std::vector<std::pair<std::string, int>> loop_vars;
+  std::vector<SymbolTable *> tables;
 };
