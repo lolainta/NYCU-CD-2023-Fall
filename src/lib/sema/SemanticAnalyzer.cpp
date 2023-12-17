@@ -240,9 +240,69 @@ void SemanticAnalyzer::visit(FunctionInvocationNode &p_func_invocation) {
    */
   p_func_invocation.visitChildNodes(*this);
   auto sym = sm.getSymbol(p_func_invocation.getNameCString());
-  auto node = dynamic_cast<FunctionNode *>(sym->node);
-  p_func_invocation.setType(
-      std::make_shared<PType>(node->getReturnType()->getPrimitiveType()));
+  if (sym == nullptr) {
+    char error_msg[128];
+    snprintf(error_msg, sizeof(error_msg), "use of undeclared symbol '%s'",
+             p_func_invocation.getNameCString());
+    printError(error_msg, p_func_invocation.getLocation().line,
+               p_func_invocation.getLocation().col);
+    p_func_invocation.setError();
+    return;
+  } else if (sym->kind != "function") {
+    char error_msg[128];
+    snprintf(error_msg, sizeof(error_msg), "call of non-function symbol '%s'",
+             p_func_invocation.getNameCString());
+    printError(error_msg, p_func_invocation.getLocation().line,
+               p_func_invocation.getLocation().col);
+    p_func_invocation.setError();
+    return;
+  } else {
+    auto node = dynamic_cast<FunctionNode *>(sym->node);
+    p_func_invocation.setType(
+        std::make_shared<PType>(node->getReturnType()->getPrimitiveType()));
+    auto &args = p_func_invocation.getArgs();
+    auto &param_groups = node->getParameters();
+    std::vector<VariableNode *> params;
+    for_each(param_groups.begin(), param_groups.end(), [&](auto &param_group) {
+      for_each(param_group->getVariables().begin(),
+               param_group->getVariables().end(),
+               [&](auto &param) { params.push_back(param.get()); });
+    });
+    if (args.size() != params.size()) {
+      char error_msg[128];
+      // snprintf(error_msg, sizeof(error_msg),
+      //          "too %s arguments to function '%s' ('%d' expected, '%d'
+      //          given)", args.size() > params.size() ? "many" : "few",
+      //          p_func_invocation.getNameCString(), params.size(),
+      //          args.size());
+      snprintf(error_msg, sizeof(error_msg),
+               "too %s arguments provided for function '%s'", "few/much",
+               p_func_invocation.getNameCString());
+      printError(error_msg, p_func_invocation.getLocation().line,
+                 p_func_invocation.getLocation().col);
+      p_func_invocation.setError();
+      return;
+    } else {
+      for (int i = 0; i < args.size(); i++) {
+        auto arg = args[i].get();
+        auto param = params[i];
+        if (arg->isError()) {
+          p_func_invocation.setError();
+          return;
+        }
+        if (strcmp(arg->getTypeCString(), param->getTypeCString())) {
+          char error_msg[128];
+          snprintf(error_msg, sizeof(error_msg),
+                   "incompatible type passing '%s' to parameter of type '%s'",
+                   arg->getTypeCString(), param->getTypeCString());
+          printError(error_msg, arg->getLocation().line,
+                     arg->getLocation().col);
+          p_func_invocation.setError();
+          return;
+        }
+      }
+    }
+  }
 }
 
 void SemanticAnalyzer::visit(VariableReferenceNode &p_variable_ref) {

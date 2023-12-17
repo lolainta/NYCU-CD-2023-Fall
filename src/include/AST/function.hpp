@@ -36,7 +36,6 @@ class FunctionNode final : public AstNode {
         m_body(p_body) {}
 
   const PType *getReturnType() const { return m_ret_type.get(); }
-
   const char *getNameCString() const { return m_name.c_str(); }
   const char *getReturnTypeCString() const;
   const char *getParametersTypeCString() const;
