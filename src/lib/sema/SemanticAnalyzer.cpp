@@ -42,8 +42,9 @@ void SemanticAnalyzer::printError(const std::string &msg,
 void SemanticAnalyzer::visit(ProgramNode &p_program) {
   sm.pushScope();
   ADD_SYMBOL(p_program.getNameCString(), "program", "void", "", &p_program);
-  sm.pushContext(sm.getSymbol(p_program.getNameCString()));
+  sm.pushContext(p_program.getNameCString());
   p_program.visitChildNodes(*this);
+  sm.popContext();
   sm.dumpLastScope();
   sm.popScope();
 }
@@ -88,7 +89,7 @@ void SemanticAnalyzer::visit(FunctionNode &p_function) {
   ADD_SYMBOL(p_function.getNameCString(), "function",
              p_function.getReturnTypeCString(),
              p_function.getParametersTypeCString(), &p_function);
-  sm.pushContext(sm.getSymbol(p_function.getNameCString()));
+  sm.pushContext(p_function.getNameCString());
   sm.pushScope();
   for_each(p_function.getParameters().begin(), p_function.getParameters().end(),
            [&](auto &param_node) {
@@ -102,6 +103,7 @@ void SemanticAnalyzer::visit(FunctionNode &p_function) {
   p_function.getBody()->visitChildNodes(*this);
   sm.dumpLastScope();
   sm.popScope();
+  sm.popContext();
 }
 
 void SemanticAnalyzer::visit(CompoundStatementNode &p_compound_statement) {
@@ -507,7 +509,9 @@ void SemanticAnalyzer::visit(ReturnNode &p_return) {
   if (ret->isError()) {
     return;
   }
-  auto context = sm.getContext();
+  auto _context = sm.getContext();
+  auto context = sm.getSymbol(_context);
+  // std::cout << context->name << ' ' << context->kind << std::endl;
   assert(context != nullptr);
   if (context->kind == "function") {
     auto func = dynamic_cast<FunctionNode *>(context->node);
@@ -521,7 +525,7 @@ void SemanticAnalyzer::visit(ReturnNode &p_return) {
     }
   } else {
     // std::cout << context->kind << std::endl;
-    // // assert(context->kind == "program");
+    assert(context->kind == "program");
     if (ret != nullptr) {
       char error_msg[128];
       snprintf(error_msg, sizeof(error_msg),
@@ -530,5 +534,4 @@ void SemanticAnalyzer::visit(ReturnNode &p_return) {
       return;
     }
   }
-  sm.popContext();
 }

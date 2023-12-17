@@ -79,23 +79,23 @@ class SymbolManager {
     }
     return nullptr;
   }
-  SymbolEntry *getContext() {
+  const std::string &getContext() {
     if (contextStack.empty()) {
       return nullptr;
     }
     return contextStack.top();
   }
-  void pushContext(SymbolEntry *entry) {
-    // std::cout << "push context: " << entry->name << std::endl;
-    contextStack.push(entry);
+  void pushContext(const std::string &name) {
+    // std::cout << "push context: " << name << std::endl;
+    contextStack.push(name);
   }
   void popContext() {
     assert(!contextStack.empty());
-    // std::cout << "pop context: " << contextStack.top()->name << std::endl;
+    // std::cout << "pop context: " << contextStack.top() << std::endl;
     contextStack.pop();
   }
 
  private:
   std::vector<SymbolTable *> tables;
-  std::stack<SymbolEntry *> contextStack;
+  std::stack<std::string> contextStack;
 };
