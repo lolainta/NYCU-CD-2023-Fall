@@ -42,7 +42,6 @@ void SemanticAnalyzer::printError(const std::string &msg,
 void SemanticAnalyzer::visit(ProgramNode &p_program) {
   sm.pushScope();
   ADD_SYMBOL(p_program.getNameCString(), "program", "void", "", &p_program);
-  sm.pushContext(p_program.getNameCString());
   p_program.visitChildNodes(*this);
   sm.popContext();
   sm.dumpLastScope();
@@ -65,6 +64,7 @@ void SemanticAnalyzer::visit(DeclNode &p_decl) {
 }
 
 void SemanticAnalyzer::visit(VariableNode &p_variable) {
+  p_variable.visitChildNodes(*this);
   auto dims = p_variable.getTypeSharedPtr()->getDimensions();
   for (auto dim : dims) {
     if (dim == 0) {
@@ -77,7 +77,6 @@ void SemanticAnalyzer::visit(VariableNode &p_variable) {
       printError(error_msg, p_variable.getLocation());
     }
   }
-  p_variable.visitChildNodes(*this);
 }
 
 void SemanticAnalyzer::visit(ConstantValueNode &p_constant_value) {
@@ -89,7 +88,6 @@ void SemanticAnalyzer::visit(FunctionNode &p_function) {
   ADD_SYMBOL(p_function.getNameCString(), "function",
              p_function.getReturnTypeCString(),
              p_function.getParametersTypeCString(), &p_function);
-  sm.pushContext(p_function.getNameCString());
   sm.pushScope();
   for_each(p_function.getParameters().begin(), p_function.getParameters().end(),
            [&](auto &param_node) {
@@ -100,7 +98,16 @@ void SemanticAnalyzer::visit(FunctionNode &p_function) {
                                    var_node.get());
                       });
            });
-  p_function.getBody()->visitChildNodes(*this);
+
+  for_each(p_function.getParameters().begin(), p_function.getParameters().end(),
+           [&](auto &param_node) {
+             for_each(param_node->getVariables().begin(),
+                      param_node->getVariables().end(),
+                      [&](auto &var_node) { visit(*var_node.get()); });
+           });
+  if (p_function.getBody() != nullptr) {
+    p_function.getBody()->visitChildNodes(*this);
+  }
   sm.dumpLastScope();
   sm.popScope();
   sm.popContext();
@@ -323,6 +330,10 @@ void SemanticAnalyzer::visit(VariableReferenceNode &p_variable_ref) {
   } else {
     auto &idxs = p_variable_ref.getIndices();
     for (auto &_idx : idxs) {
+      if (_idx->isError()) {
+        p_variable_ref.setError();
+        return;
+      }
       auto idx = dynamic_cast<ConstantValueNode *>(_idx.get());
       if (strncmp(idx->getTypeSharedPtr()->getPTypeCString(), "integer", 7)) {
         char error_msg[128];
@@ -509,9 +520,7 @@ void SemanticAnalyzer::visit(ReturnNode &p_return) {
   if (ret->isError()) {
     return;
   }
-  auto _context = sm.getContext();
-  auto context = sm.getSymbol(_context);
-  // std::cout << context->name << ' ' << context->kind << std::endl;
+  auto context = sm.getContext();
   assert(context != nullptr);
   if (context->kind == "function") {
     auto func = dynamic_cast<FunctionNode *>(context->node);
@@ -524,7 +533,6 @@ void SemanticAnalyzer::visit(ReturnNode &p_return) {
       return;
     }
   } else {
-    // std::cout << context->kind << std::endl;
     assert(context->kind == "program");
     if (ret != nullptr) {
       char error_msg[128];

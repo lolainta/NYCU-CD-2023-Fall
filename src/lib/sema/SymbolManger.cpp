@@ -11,27 +11,10 @@ void dumpDemarcation(const char chr, size_t n) {
   puts("");
 }
 
-// void dumpSymbol(void) {
-//   dumpDemarcation('=');
-//   printf("%-33s%-11s%-11s%-17s%-11s\n", "Name", "Kind", "Level", "Type",
-//          "Attribute");
-//   dumpDemarcation('-');
-//   {
-//     printf("%-33s", "func");
-//     printf("%-11s", "function");
-//     printf("%d%-10s", 0, "(global)");
-//     printf("%-17s", "boolean");
-//     printf("%-11s", "integer, real [2][3]");
-//     puts("");
-//   }
-//   dumpDemarcation('-');
-// }
-
-bool SymbolTable::addSymbol(SymbolEntry entry) {
-  if (std::find_if(entries.begin(), entries.end(),
-                   [&entry](const SymbolEntry &a) {
-                     return a.name == entry.name && a.level == entry.level;
-                   }) != entries.end()) {
+bool SymbolTable::addSymbol(SymbolEntry *entry) {
+  if (std::find_if(entries.begin(), entries.end(), [&entry](SymbolEntry *a) {
+        return a->name == entry->name && a->level == entry->level;
+      }) != entries.end()) {
     return false;
   }
   entries.push_back(entry);
@@ -43,15 +26,16 @@ void SymbolTable::dump() {
   printf("%-33s%-11s%-11s%-17s%-11s\n", "Name", "Kind", "Level", "Type",
          "Attribute");
   dumpDemarcation('-', 110);
-  for (auto entry : entries) {
-    printf("%-33s", entry.name.c_str());
-    printf("%-11s", entry.kind.c_str());
-    printf("%d%-10s", entry.level, (entry.level == 0) ? "(global)" : "(local)");
-    printf("%-17s", entry.type.c_str());
-    printf("%-11s", entry.attribute.c_str());
+  for (const auto &entry : entries) {
+    printf("%-33s", entry->name.c_str());
+    printf("%-11s", entry->kind.c_str());
+    printf("%d%-10s", entry->level, entry->level == 0 ? "(global)" : "(local)");
+    printf("%-17s", entry->type.c_str());
+    printf("%-11s", entry->attribute.c_str());
     puts("");
-  }
+  };
   dumpDemarcation('-', 110);
+  std::cout << std::flush;
 }
 
 void SymbolManager::pushScope() { tables.emplace_back(new SymbolTable()); }
@@ -65,12 +49,13 @@ bool SymbolManager::addSymbol(const std::string &name, const std::string &kind,
       }) != tables.rend()) {
     return false;
   }
-
-  if (this->tables.back()->addSymbol(
-          SymbolEntry(name, kind, tables.size() - 1, type, attribute, node))) {
-    return true;
+  auto cur =
+      new SymbolEntry(name, kind, tables.size() - 1, type, attribute, node);
+  auto ret = this->tables.back()->addSymbol(cur);
+  if (kind == "function" or kind == "program") {
+    contextStack.push(cur);
   }
-  return false;
+  return ret;
 }
 
 bool SymbolManager::addSymbol(const std::string &name, const std::string &kind,
@@ -78,9 +63,13 @@ bool SymbolManager::addSymbol(const std::string &name, const std::string &kind,
   return this->addSymbol(name, kind, type, "", node);
 }
 
-void SymbolManager::popScope() {
-  int level = tables.size() - 1;
-  tables.pop_back();
-}
+void SymbolManager::popScope() { tables.pop_back(); }
 
 void SymbolManager::dumpLastScope() { tables.back()->dump(); }
+
+void SymbolManager::popContext() {
+  if (contextStack.empty()) {
+    return;
+  }
+  contextStack.pop();
+}

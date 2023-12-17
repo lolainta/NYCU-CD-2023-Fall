@@ -46,19 +46,19 @@ class SymbolTable {
 
  public:
   SymbolTable() = default;
-  bool addSymbol(SymbolEntry entry);
+  bool addSymbol(SymbolEntry *entry);
   void dump();
   SymbolEntry *getSymbol(const std::string &name) {
     for (auto it = entries.rbegin(); it != entries.rend(); it++) {
-      if (it->name == name) {
-        return &(*it);
+      if ((*it)->name == name) {
+        return *it;
       }
     }
     return nullptr;
   }
 
  private:
-  std::vector<SymbolEntry> entries;
+  std::vector<SymbolEntry *> entries;
 };
 
 class SymbolManager {
@@ -79,23 +79,15 @@ class SymbolManager {
     }
     return nullptr;
   }
-  const std::string &getContext() {
+  SymbolEntry *getContext() {
     if (contextStack.empty()) {
       return nullptr;
     }
     return contextStack.top();
   }
-  void pushContext(const std::string &name) {
-    // std::cout << "push context: " << name << std::endl;
-    contextStack.push(name);
-  }
-  void popContext() {
-    assert(!contextStack.empty());
-    // std::cout << "pop context: " << contextStack.top() << std::endl;
-    contextStack.pop();
-  }
+  void popContext();
 
  private:
   std::vector<SymbolTable *> tables;
-  std::stack<std::string> contextStack;
+  std::stack<SymbolEntry *> contextStack;
 };
