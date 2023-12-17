@@ -14,8 +14,7 @@ class SemanticAnalyzer final : public AstNodeVisitor {
   SymbolManager sm;
   std::string filename;
   std::vector<std::string> lines;
-  void printError(const std::string &msg, const uint32_t line,
-                  const uint32_t col) const;
+  void printError(const std::string &, const Location &) const;
   mutable bool error = false;
 
  public:

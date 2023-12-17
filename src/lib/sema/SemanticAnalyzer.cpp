@@ -20,12 +20,12 @@ SemanticAnalyzer::SemanticAnalyzer(const std::string &p_filename)
   fin.close();
 }
 
-void SemanticAnalyzer::printError(const std::string &msg, const uint32_t line,
-                                  const uint32_t col) const {
-  fprintf(stderr, "<Error> Found in line %d, column %d: %s\n", line, col,
-          msg.c_str());
-  fprintf(stderr, "    %s\n", lines[line - 1].c_str());
-  for (uint32_t i = 0; i < 4 + col - 1; ++i) {
+void SemanticAnalyzer::printError(const std::string &msg,
+                                  const Location &loc) const {
+  fprintf(stderr, "<Error> Found in line %d, column %d: %s\n", loc.line,
+          loc.col, msg.c_str());
+  fprintf(stderr, "    %s\n", lines[loc.line - 1].c_str());
+  for (uint32_t i = 0; i < 4 + loc.col - 1; ++i) {
     fprintf(stderr, " ");
   }
   fprintf(stderr, "^\n");
@@ -36,8 +36,7 @@ void SemanticAnalyzer::printError(const std::string &msg, const uint32_t line,
   if (!sm.addSymbol(name, kind, type, attr, node)) {                           \
     char error_msg[128];                                                       \
     snprintf(error_msg, sizeof(error_msg), "symbol '%s' is redeclared", name); \
-    printError(error_msg, (node)->getLocation().line,                          \
-               (node)->getLocation().col);                                     \
+    printError(error_msg, (node)->getLocation());                              \
   }
 
 void SemanticAnalyzer::visit(ProgramNode &p_program) {
@@ -73,8 +72,7 @@ void SemanticAnalyzer::visit(VariableNode &p_variable) {
           error_msg, sizeof(error_msg),
           "'%s' declared as an array with an index that is not greater than 0",
           p_variable.getNameCString());
-      printError(error_msg, p_variable.getLocation().line,
-                 p_variable.getLocation().col);
+      printError(error_msg, p_variable.getLocation());
     }
   }
   p_variable.visitChildNodes(*this);
@@ -122,8 +120,7 @@ void SemanticAnalyzer::visit(BinaryOperatorNode &p_bin_op) {
   snprintf(error_msg, sizeof(error_msg),                                   \
            "invalid operands to binary operator '%s' ('%s' and '%s')", op, \
            lhs_type, rhs_type);                                            \
-  printError(error_msg, p_bin_op.getLocation().line,                       \
-             p_bin_op.getLocation().col);                                  \
+  printError(error_msg, p_bin_op.getLocation());                           \
   p_bin_op.setError();
 
   p_bin_op.visitChildNodes(*this);
@@ -204,8 +201,7 @@ void SemanticAnalyzer::visit(UnaryOperatorNode &p_un_op) {
       snprintf(error_msg, sizeof(error_msg),
                "invalid operand to unary operator '%s' ('%s')",
                p_un_op.getOpCString(), operand->getTypeCString());
-      printError(error_msg, p_un_op.getLocation().line,
-                 p_un_op.getLocation().col);
+      printError(error_msg, p_un_op.getLocation());
       p_un_op.setError();
     } else {
       p_un_op.setType(operand->getTypeSharedPtr());
@@ -216,8 +212,7 @@ void SemanticAnalyzer::visit(UnaryOperatorNode &p_un_op) {
       snprintf(error_msg, sizeof(error_msg),
                "invalid operand to unary operator '%s' ('%s')",
                p_un_op.getOpCString(), operand->getTypeCString());
-      printError(error_msg, p_un_op.getLocation().line,
-                 p_un_op.getLocation().col);
+      printError(error_msg, p_un_op.getLocation());
       p_un_op.setError();
     } else {
       p_un_op.setType(operand->getTypeSharedPtr());
@@ -244,16 +239,14 @@ void SemanticAnalyzer::visit(FunctionInvocationNode &p_func_invocation) {
     char error_msg[128];
     snprintf(error_msg, sizeof(error_msg), "use of undeclared symbol '%s'",
              p_func_invocation.getNameCString());
-    printError(error_msg, p_func_invocation.getLocation().line,
-               p_func_invocation.getLocation().col);
+    printError(error_msg, p_func_invocation.getLocation());
     p_func_invocation.setError();
     return;
   } else if (sym->kind != "function") {
     char error_msg[128];
     snprintf(error_msg, sizeof(error_msg), "call of non-function symbol '%s'",
              p_func_invocation.getNameCString());
-    printError(error_msg, p_func_invocation.getLocation().line,
-               p_func_invocation.getLocation().col);
+    printError(error_msg, p_func_invocation.getLocation());
     p_func_invocation.setError();
     return;
   } else {
@@ -278,8 +271,7 @@ void SemanticAnalyzer::visit(FunctionInvocationNode &p_func_invocation) {
       snprintf(error_msg, sizeof(error_msg),
                "too %s arguments provided for function '%s'", "few/much",
                p_func_invocation.getNameCString());
-      printError(error_msg, p_func_invocation.getLocation().line,
-                 p_func_invocation.getLocation().col);
+      printError(error_msg, p_func_invocation.getLocation());
       p_func_invocation.setError();
       return;
     } else {
@@ -295,8 +287,7 @@ void SemanticAnalyzer::visit(FunctionInvocationNode &p_func_invocation) {
           snprintf(error_msg, sizeof(error_msg),
                    "incompatible type passing '%s' to parameter of type '%s'",
                    arg->getTypeCString(), param->getTypeCString());
-          printError(error_msg, arg->getLocation().line,
-                     arg->getLocation().col);
+          printError(error_msg, arg->getLocation());
           p_func_invocation.setError();
           return;
         }
@@ -312,8 +303,7 @@ void SemanticAnalyzer::visit(VariableReferenceNode &p_variable_ref) {
     char error_msg[128];
     snprintf(error_msg, sizeof(error_msg), "use of undeclared symbol '%s'",
              p_variable_ref.getNameCString());
-    printError(error_msg, p_variable_ref.getLocation().line,
-               p_variable_ref.getLocation().col);
+    printError(error_msg, p_variable_ref.getLocation());
     p_variable_ref.setError();
     return;
   } else if (sym->error) {
@@ -321,8 +311,7 @@ void SemanticAnalyzer::visit(VariableReferenceNode &p_variable_ref) {
     char error_msg[128];
     snprintf(error_msg, sizeof(error_msg), "use of non-variable symbol '%s'",
              p_variable_ref.getNameCString());
-    printError(error_msg, p_variable_ref.getLocation().line,
-               p_variable_ref.getLocation().col);
+    printError(error_msg, p_variable_ref.getLocation());
     p_variable_ref.setError();
     return;
   } else {
@@ -333,7 +322,7 @@ void SemanticAnalyzer::visit(VariableReferenceNode &p_variable_ref) {
         char error_msg[128];
         snprintf(error_msg, sizeof(error_msg),
                  "index of array reference must be an integer");
-        printError(error_msg, idx->getLocation().line, idx->getLocation().col);
+        printError(error_msg, idx->getLocation());
         p_variable_ref.setError();
         return;
       }
@@ -346,8 +335,7 @@ void SemanticAnalyzer::visit(VariableReferenceNode &p_variable_ref) {
       snprintf(error_msg, sizeof(error_msg),
                "there is an over array subscript on '%s'",
                p_variable_ref.getNameCString());
-      printError(error_msg, p_variable_ref.getLocation().line,
-                 p_variable_ref.getLocation().col);
+      printError(error_msg, p_variable_ref.getLocation());
       p_variable_ref.setError();
       return;
     }
