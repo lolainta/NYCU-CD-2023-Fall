@@ -29,20 +29,20 @@ void SemanticAnalyzer::printError(const std::string &msg, const uint32_t line,
     fprintf(stderr, " ");
   }
   fprintf(stderr, "^\n");
+  this->error = true;
 }
 
-#define ADD_SYBMOL(name, kind, type, attr, node)                               \
+#define ADD_SYMBOL(name, kind, type, attr, node)                               \
   if (!sm.addSymbol(name, kind, type, attr, node)) {                           \
     char error_msg[128];                                                       \
     snprintf(error_msg, sizeof(error_msg), "symbol '%s' is redeclared", name); \
     printError(error_msg, (node)->getLocation().line,                          \
                (node)->getLocation().col);                                     \
-    error = true;                                                              \
   }
 
 void SemanticAnalyzer::visit(ProgramNode &p_program) {
   sm.pushScope();
-  ADD_SYBMOL(p_program.getNameCString(), "program", "void", "", &p_program);
+  ADD_SYMBOL(p_program.getNameCString(), "program", "void", "", &p_program);
   p_program.visitChildNodes(*this);
   sm.dumpLastScope();
   sm.popScope();
@@ -52,11 +52,11 @@ void SemanticAnalyzer::visit(DeclNode &p_decl) {
   for_each(p_decl.getVariables().begin(), p_decl.getVariables().end(),
            [&](auto &var_node) {
              if (var_node->isConstant()) {
-               ADD_SYBMOL(var_node->getNameCString(), "constant",
+               ADD_SYMBOL(var_node->getNameCString(), "constant",
                           var_node->getTypeCString(),
                           var_node->getConstantValueCString(), var_node.get());
              } else {
-               ADD_SYBMOL(var_node->getNameCString(), "variable",
+               ADD_SYMBOL(var_node->getNameCString(), "variable",
                           var_node->getTypeCString(), "", var_node.get());
              }
            });
@@ -75,7 +75,6 @@ void SemanticAnalyzer::visit(VariableNode &p_variable) {
           p_variable.getNameCString());
       printError(error_msg, p_variable.getLocation().line,
                  p_variable.getLocation().col);
-      error = true;
     }
   }
   p_variable.visitChildNodes(*this);
@@ -87,7 +86,7 @@ void SemanticAnalyzer::visit(ConstantValueNode &p_constant_value) {
 }
 
 void SemanticAnalyzer::visit(FunctionNode &p_function) {
-  ADD_SYBMOL(p_function.getNameCString(), "function",
+  ADD_SYMBOL(p_function.getNameCString(), "function",
              p_function.getReturnTypeCString(),
              p_function.getParametersTypeCString(), &p_function);
 
@@ -96,7 +95,7 @@ void SemanticAnalyzer::visit(FunctionNode &p_function) {
            [&](auto &param_node) {
              for_each(param_node->getVariables().begin(),
                       param_node->getVariables().end(), [&](auto &var_node) {
-                        ADD_SYBMOL(var_node->getNameCString(), "parameter",
+                        ADD_SYMBOL(var_node->getNameCString(), "parameter",
                                    var_node->getTypeCString(), "",
                                    var_node.get());
                       });
@@ -116,6 +115,7 @@ void SemanticAnalyzer::visit(CompoundStatementNode &p_compound_statement) {
 void SemanticAnalyzer::visit(PrintNode &p_print) {
   p_print.visitChildNodes(*this);
 }
+
 void SemanticAnalyzer::visit(BinaryOperatorNode &p_bin_op) {
 #define PRINT_ERROR(op, lhs_type, rhs_type)                                \
   char error_msg[128];                                                     \
@@ -124,7 +124,6 @@ void SemanticAnalyzer::visit(BinaryOperatorNode &p_bin_op) {
            lhs_type, rhs_type);                                            \
   printError(error_msg, p_bin_op.getLocation().line,                       \
              p_bin_op.getLocation().col);                                  \
-  error = true;                                                            \
   p_bin_op.setError();
 
   p_bin_op.visitChildNodes(*this);
@@ -191,16 +190,41 @@ void SemanticAnalyzer::visit(BinaryOperatorNode &p_bin_op) {
 }
 
 void SemanticAnalyzer::visit(UnaryOperatorNode &p_un_op) {
-  /*
-   * TODO:
-   *
-   * 1. Push a new symbol table if this node forms a scope.
-   * 2. Insert the symbol into current symbol table if this node is related to
-   *    declaration (ProgramNode, VariableNode, FunctionNode).
-   * 3. Travere child nodes of this node.
-   * 4. Perform semantic analyses of this node.
-   * 5. Pop the symbol table pushed at the 1st step.
-   */
+  p_un_op.visitChildNodes(*this);
+  auto operand = p_un_op.getOperand();
+  if (operand->isError()) {
+    p_un_op.setError();
+    return;
+  }
+  auto op = p_un_op.getOp();
+  if (op == Operator::kNegOp) {
+    if (strcmp(operand->getTypeCString(), "integer") &&
+        strcmp(operand->getTypeCString(), "real")) {
+      char error_msg[128];
+      snprintf(error_msg, sizeof(error_msg),
+               "invalid operand to unary operator '%s' ('%s')",
+               p_un_op.getOpCString(), operand->getTypeCString());
+      printError(error_msg, p_un_op.getLocation().line,
+                 p_un_op.getLocation().col);
+      p_un_op.setError();
+    } else {
+      p_un_op.setType(operand->getTypeSharedPtr());
+    }
+  } else if (op == Operator::kNotOp) {
+    if (strcmp(operand->getTypeCString(), "boolean")) {
+      char error_msg[128];
+      snprintf(error_msg, sizeof(error_msg),
+               "invalid operand to unary operator '%s' ('%s')",
+               p_un_op.getOpCString(), operand->getTypeCString());
+      printError(error_msg, p_un_op.getLocation().line,
+                 p_un_op.getLocation().col);
+      p_un_op.setError();
+    } else {
+      p_un_op.setType(operand->getTypeSharedPtr());
+    }
+  } else {
+    assert(false);
+  }
 }
 
 void SemanticAnalyzer::visit(FunctionInvocationNode &p_func_invocation) {
@@ -230,7 +254,7 @@ void SemanticAnalyzer::visit(VariableReferenceNode &p_variable_ref) {
              p_variable_ref.getNameCString());
     printError(error_msg, p_variable_ref.getLocation().line,
                p_variable_ref.getLocation().col);
-    error = true;
+    p_variable_ref.setError();
     return;
   } else if (sym->error) {
   } else if (sym->kind == "function" || sym->kind == "program") {
@@ -239,7 +263,7 @@ void SemanticAnalyzer::visit(VariableReferenceNode &p_variable_ref) {
              p_variable_ref.getNameCString());
     printError(error_msg, p_variable_ref.getLocation().line,
                p_variable_ref.getLocation().col);
-    error = true;
+    p_variable_ref.setError();
     return;
   } else {
     auto &idxs = p_variable_ref.getIndices();
@@ -250,7 +274,7 @@ void SemanticAnalyzer::visit(VariableReferenceNode &p_variable_ref) {
         snprintf(error_msg, sizeof(error_msg),
                  "index of array reference must be an integer");
         printError(error_msg, idx->getLocation().line, idx->getLocation().col);
-        error = true;
+        p_variable_ref.setError();
         return;
       }
     }
@@ -264,7 +288,7 @@ void SemanticAnalyzer::visit(VariableReferenceNode &p_variable_ref) {
                p_variable_ref.getNameCString());
       printError(error_msg, p_variable_ref.getLocation().line,
                  p_variable_ref.getLocation().col);
-      error = true;
+      p_variable_ref.setError();
       return;
     }
   }
@@ -332,7 +356,7 @@ void SemanticAnalyzer::visit(ForNode &p_for) {
   sm.pushScope();
   for_each(p_for.getLoopVarDecl()->getVariables().begin(),
            p_for.getLoopVarDecl()->getVariables().end(), [&](auto &var_node) {
-             ADD_SYBMOL(var_node->getNameCString(), "loop_var",
+             ADD_SYMBOL(var_node->getNameCString(), "loop_var",
                         var_node->getTypeCString(), "", var_node.get());
            });
   sm.pushScope();

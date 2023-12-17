@@ -779,7 +779,6 @@ int main(int argc, const char *argv[]) {
     SemanticAnalyzer sema_analyzer(argv[1]);
     root->accept(sema_analyzer);
 
-    // TODO: do not print this if there's any semantic error
     if (!sema_analyzer.hasError()){
       puts("");
       puts("|---------------------------------------------------|");

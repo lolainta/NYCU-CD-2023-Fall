@@ -16,7 +16,7 @@ class SemanticAnalyzer final : public AstNodeVisitor {
   std::vector<std::string> lines;
   void printError(const std::string &msg, const uint32_t line,
                   const uint32_t col) const;
-  bool error = false;
+  mutable bool error = false;
 
  public:
   ~SemanticAnalyzer() = default;

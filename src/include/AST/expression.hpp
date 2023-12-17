@@ -22,8 +22,6 @@ class ExpressionNode : public AstNode {
   void setError() { error = true; }
 
  protected:
-  // for carrying type of result of an expression
-  // TODO: for next assignment
   PTypeSharedPtr m_type;
   bool error = false;
 };
