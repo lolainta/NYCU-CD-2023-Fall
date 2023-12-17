@@ -352,16 +352,64 @@ void SemanticAnalyzer::visit(VariableReferenceNode &p_variable_ref) {
 }
 
 void SemanticAnalyzer::visit(AssignmentNode &p_assignment) {
-  /*
-   * TODO:
-   *
-   * 1. Push a new symbol table if this node forms a scope.
-   * 2. Insert the symbol into current symbol table if this node is related to
-   *    declaration (ProgramNode, VariableNode, FunctionNode).
-   * 3. Travere child nodes of this node.
-   * 4. Perform semantic analyses of this node.
-   * 5. Pop the symbol table pushed at the 1st step.
-   */
+  p_assignment.visitChildNodes(*this);
+  auto lhs = p_assignment.getLvalue();
+  auto rhs = p_assignment.getRvalue();
+  if (lhs->isError()) {
+    return;
+  }
+  auto sym = sm.getSymbol(lhs->getNameCString());
+  if (lhs->getTypeSharedPtr().get()->getDimensions().size() != 0) {
+    char error_msg[128];
+    snprintf(error_msg, sizeof(error_msg), "array assignment is not allowed");
+    printError(error_msg, lhs->getLocation());
+    return;
+  }
+  if (sym->kind == "constant") {
+    char error_msg[128];
+    snprintf(error_msg, sizeof(error_msg),
+             "cannot assign to variable '%s' which is a constant",
+             lhs->getNameCString());
+    printError(error_msg, lhs->getLocation());
+    return;
+  }
+  if (sym->kind == "loop_var") {
+    char error_msg[128];
+    snprintf(
+        error_msg, sizeof(error_msg),
+        "the value of loop variable cannot be modified inside the loop body");
+    printError(error_msg, lhs->getLocation());
+    return;
+  }
+  if (rhs->getTypeSharedPtr().get()->getDimensions().size() != 0) {
+    char error_msg[128];
+    snprintf(error_msg, sizeof(error_msg), "array assignment is not allowed");
+    printError(error_msg, rhs->getLocation());
+    return;
+  }
+  auto org_lhs_type = strdup(lhs->getTypeCString());
+  auto org_rhs_type = strdup(rhs->getTypeCString());
+  if (lhs->getTypeSharedPtr()->getPrimitiveType() ==
+          PType::PrimitiveTypeEnum::kRealType and
+      rhs->getTypeSharedPtr()->getPrimitiveType() ==
+          PType::PrimitiveTypeEnum::kIntegerType) {
+    rhs->getTypeSharedPtr()->setPrimitiveType(
+        PType::PrimitiveTypeEnum::kRealType);
+  }
+  if (lhs->getTypeSharedPtr()->getPrimitiveType() ==
+          PType::PrimitiveTypeEnum::kIntegerType and
+      rhs->getTypeSharedPtr()->getPrimitiveType() ==
+          PType::PrimitiveTypeEnum::kRealType) {
+    lhs->getTypeSharedPtr()->setPrimitiveType(
+        PType::PrimitiveTypeEnum::kRealType);
+  }
+  if (strcmp(lhs->getTypeCString(), rhs->getTypeCString())) {
+    char error_msg[128];
+    snprintf(error_msg, sizeof(error_msg),
+             "assigning to '%s' from incompatible type '%s'",
+             lhs->getTypeCString(), rhs->getTypeCString());
+    printError(error_msg, p_assignment.getLocation());
+  }
 }
 
 void SemanticAnalyzer::visit(ReadNode &p_read) {
