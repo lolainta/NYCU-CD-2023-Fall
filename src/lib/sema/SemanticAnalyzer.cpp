@@ -236,16 +236,6 @@ void SemanticAnalyzer::visit(UnaryOperatorNode &p_un_op) {
 }
 
 void SemanticAnalyzer::visit(FunctionInvocationNode &p_func_invocation) {
-  /*
-   * TODO:
-   *
-   * 1. Push a new symbol table if this node forms a scope.
-   * 2. Insert the symbol into current symbol table if this node is related to
-   *    declaration (ProgramNode, VariableNode, FunctionNode).
-   * 3. Travere child nodes of this node.
-   * 4. Perform semantic analyses of this node.
-   * 5. Pop the symbol table pushed at the 1st step.
-   */
   p_func_invocation.visitChildNodes(*this);
   auto sym = sm.getSymbol(p_func_invocation.getNameCString());
   if (sym == nullptr) {
@@ -375,16 +365,27 @@ void SemanticAnalyzer::visit(AssignmentNode &p_assignment) {
 }
 
 void SemanticAnalyzer::visit(ReadNode &p_read) {
-  /*
-   * TODO:
-   *
-   * 1. Push a new symbol table if this node forms a scope.
-   * 2. Insert the symbol into current symbol table if this node is related to
-   *    declaration (ProgramNode, VariableNode, FunctionNode).
-   * 3. Travere child nodes of this node.
-   * 4. Perform semantic analyses of this node.
-   * 5. Pop the symbol table pushed at the 1st step.
-   */
+  p_read.visitChildNodes(*this);
+  auto tar = p_read.getTarget();
+  auto sym = sm.getSymbol(tar->getNameCString());
+  if (tar->isError()) {
+    return;
+  }
+  if (strcmp(tar->getTypeCString(), "integer") &&
+      strcmp(tar->getTypeCString(), "real") &&
+      strcmp(tar->getTypeCString(), "string") &&
+      strcmp(tar->getTypeCString(), "boolean")) {
+    char error_msg[128];
+    snprintf(error_msg, sizeof(error_msg),
+             "variable reference of read statement must be scalar type");
+    printError(error_msg, tar->getLocation());
+  } else if (sym->kind == "constant" or sym->kind == "loop_var") {
+    char error_msg[128];
+    snprintf(error_msg, sizeof(error_msg),
+             "variable reference of read statement cannot be a constant or "
+             "loop variable");
+    printError(error_msg, tar->getLocation());
+  }
 }
 
 void SemanticAnalyzer::visit(IfNode &p_if) {
