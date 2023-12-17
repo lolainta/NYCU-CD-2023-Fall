@@ -112,6 +112,19 @@ void SemanticAnalyzer::visit(CompoundStatementNode &p_compound_statement) {
 
 void SemanticAnalyzer::visit(PrintNode &p_print) {
   p_print.visitChildNodes(*this);
+  auto tar = p_print.getTarget();
+  if (tar->isError()) {
+    return;
+  }
+  if (strcmp(tar->getTypeCString(), "integer") &&
+      strcmp(tar->getTypeCString(), "real") &&
+      strcmp(tar->getTypeCString(), "string") &&
+      strcmp(tar->getTypeCString(), "boolean")) {
+    char error_msg[128];
+    snprintf(error_msg, sizeof(error_msg),
+             "expression of print statement must be scalar type");
+    printError(error_msg, tar->getLocation());
+  }
 }
 
 void SemanticAnalyzer::visit(BinaryOperatorNode &p_bin_op) {
