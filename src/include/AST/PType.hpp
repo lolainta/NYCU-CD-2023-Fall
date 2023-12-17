@@ -28,7 +28,16 @@ class PType {
  public:
   ~PType() = default;
   PType(const PrimitiveTypeEnum type) : m_type(type) {}
+  PType(const PrimitiveTypeEnum type, std::vector<uint64_t> &p_dims)
+      : m_type(type), m_dimensions(std::move(p_dims)) {}
+  PType(const PTypeSharedPtr &p_type)
+      : m_type(p_type->getPrimitiveType()),
+        m_dimensions(p_type->getDimensions()) {}
 
+  void setPrimitiveType(const PrimitiveTypeEnum type) {
+    m_type = type;
+    m_type_string_is_valid = false;
+  }
   void setDimensions(std::vector<uint64_t> &p_dims) {
     m_dimensions = std::move(p_dims);
   }

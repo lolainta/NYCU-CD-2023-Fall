@@ -81,7 +81,10 @@ void SemanticAnalyzer::visit(VariableNode &p_variable) {
   p_variable.visitChildNodes(*this);
 }
 
-void SemanticAnalyzer::visit(ConstantValueNode &p_constant_value) {}
+void SemanticAnalyzer::visit(ConstantValueNode &p_constant_value) {
+  p_constant_value.setType(
+      std::make_shared<PType>(p_constant_value.getTypeSharedPtr()));
+}
 
 void SemanticAnalyzer::visit(FunctionNode &p_function) {
   ADD_SYBMOL(p_function.getNameCString(), "function",
@@ -111,30 +114,80 @@ void SemanticAnalyzer::visit(CompoundStatementNode &p_compound_statement) {
 }
 
 void SemanticAnalyzer::visit(PrintNode &p_print) {
-  /*
-   * TODO:
-   *
-   * 1. Push a new symbol table if this node forms a scope.
-   * 2. Insert the symbol into current symbol table if this node is related to
-   *    declaration (ProgramNode, VariableNode, FunctionNode).
-   * 3. Travere child nodes of this node.
-   * 4. Perform semantic analyses of this node.
-   * 5. Pop the symbol table pushed at the 1st step.
-   */
   p_print.visitChildNodes(*this);
 }
-
 void SemanticAnalyzer::visit(BinaryOperatorNode &p_bin_op) {
-  /*
-   * TODO:
-   *
-   * 1. Push a new symbol table if this node forms a scope.
-   * 2. Insert the symbol into current symbol table if this node is related to
-   *    declaration (ProgramNode, VariableNode, FunctionNode).
-   * 3. Travere child nodes of this node.
-   * 4. Perform semantic analyses of this node.
-   * 5. Pop the symbol table pushed at the 1st step.
-   */
+#define PRINT_ERROR(op, lhs_type, rhs_type)                                \
+  char error_msg[128];                                                     \
+  snprintf(error_msg, sizeof(error_msg),                                   \
+           "invalid operands to binary operator '%s' ('%s' and '%s')", op, \
+           lhs_type, rhs_type);                                            \
+  printError(error_msg, p_bin_op.getLocation().line,                       \
+             p_bin_op.getLocation().col);                                  \
+  error = true;                                                            \
+  p_bin_op.setError();
+
+  p_bin_op.visitChildNodes(*this);
+  const auto &[lhs, rhs] = p_bin_op.getOperands();
+  if (lhs->isError() or rhs->isError()) {
+    p_bin_op.setError();
+    return;
+  }
+  const PTypeSharedPtr &lhs_type = lhs->getTypeSharedPtr();
+  const PTypeSharedPtr &rhs_type = rhs->getTypeSharedPtr();
+  if (lhs_type == nullptr or rhs_type == nullptr) {
+    p_bin_op.setError();
+    return;
+  }
+  auto org_lhs_type = strdup(lhs_type.get()->getPTypeCString());
+  auto org_rhs_type = strdup(rhs_type.get()->getPTypeCString());
+  auto op = p_bin_op.getOp();
+  if (lhs_type->getPrimitiveType() == PType::PrimitiveTypeEnum::kRealType and
+      rhs_type->getPrimitiveType() == PType::PrimitiveTypeEnum::kIntegerType) {
+    rhs_type->setPrimitiveType(PType::PrimitiveTypeEnum::kRealType);
+  }
+  if (lhs_type->getPrimitiveType() == PType::PrimitiveTypeEnum::kIntegerType and
+      rhs_type->getPrimitiveType() == PType::PrimitiveTypeEnum::kRealType) {
+    lhs_type->setPrimitiveType(PType::PrimitiveTypeEnum::kRealType);
+  }
+  if (op == Operator::kPlusOp or op == Operator::kMinusOp or
+      op == Operator::kMultiplyOp or op == Operator::kDivideOp) {
+    if (strcmp(lhs_type->getPTypeCString(), rhs_type->getPTypeCString()) ||
+        strcmp(lhs_type->getPTypeCString(), "integer") &&
+            strcmp(lhs_type->getPTypeCString(), "real") &&
+            (strcmp(lhs_type->getPTypeCString(), "string") ||
+             op != Operator::kPlusOp)) {
+      PRINT_ERROR(p_bin_op.getOpCString(), org_lhs_type, org_rhs_type);
+    } else {
+      p_bin_op.setType(lhs_type);
+    }
+  } else if (op == Operator::kModOp) {
+    if (strcmp(lhs_type->getPTypeCString(), "integer") or
+        strcmp(rhs_type->getPTypeCString(), "integer")) {
+      PRINT_ERROR(p_bin_op.getOpCString(), org_lhs_type, org_rhs_type);
+    } else {
+      p_bin_op.setType(lhs_type);
+    }
+  } else if (op == Operator::kAndOp or op == Operator::kOrOp) {
+    if (strcmp(lhs_type->getPTypeCString(), rhs_type->getPTypeCString()) or
+        strcmp(lhs_type->getPTypeCString(), "boolean")) {
+      PRINT_ERROR(p_bin_op.getOpCString(), org_lhs_type, org_rhs_type);
+    } else {
+      p_bin_op.setType(lhs_type);
+    }
+  } else if (op == Operator::kEqualOp or op == Operator::kNotEqualOp or
+             op == Operator::kLessOp or op == Operator::kLessOrEqualOp or
+             op == Operator::kGreaterOp or op == Operator::kGreaterOrEqualOp) {
+    if (strcmp(lhs_type->getPTypeCString(), rhs_type->getPTypeCString()) or
+        strcmp(lhs_type->getPTypeCString(), "integer") &&
+            strcmp(lhs_type->getPTypeCString(), "real")) {
+      PRINT_ERROR(p_bin_op.getOpCString(), org_lhs_type, org_rhs_type);
+    } else {
+      p_bin_op.setType(
+          std::make_shared<PType>(PType::PrimitiveTypeEnum::kBoolType));
+    }
+  }
+#undef PRINT_ERROR
 }
 
 void SemanticAnalyzer::visit(UnaryOperatorNode &p_un_op) {
@@ -161,9 +214,15 @@ void SemanticAnalyzer::visit(FunctionInvocationNode &p_func_invocation) {
    * 4. Perform semantic analyses of this node.
    * 5. Pop the symbol table pushed at the 1st step.
    */
+  p_func_invocation.visitChildNodes(*this);
+  auto sym = sm.getSymbol(p_func_invocation.getNameCString());
+  auto node = dynamic_cast<FunctionNode *>(sym->node);
+  p_func_invocation.setType(
+      std::make_shared<PType>(node->getReturnType()->getPrimitiveType()));
 }
 
 void SemanticAnalyzer::visit(VariableReferenceNode &p_variable_ref) {
+  p_variable_ref.visitChildNodes(*this);
   auto sym = sm.getSymbol(p_variable_ref.getNameCString());
   if (sym == nullptr) {
     char error_msg[128];
@@ -172,6 +231,7 @@ void SemanticAnalyzer::visit(VariableReferenceNode &p_variable_ref) {
     printError(error_msg, p_variable_ref.getLocation().line,
                p_variable_ref.getLocation().col);
     error = true;
+    return;
   } else if (sym->error) {
   } else if (sym->kind == "function" || sym->kind == "program") {
     char error_msg[128];
@@ -180,6 +240,7 @@ void SemanticAnalyzer::visit(VariableReferenceNode &p_variable_ref) {
     printError(error_msg, p_variable_ref.getLocation().line,
                p_variable_ref.getLocation().col);
     error = true;
+    return;
   } else {
     auto &idxs = p_variable_ref.getIndices();
     for (auto &_idx : idxs) {
@@ -207,6 +268,12 @@ void SemanticAnalyzer::visit(VariableReferenceNode &p_variable_ref) {
       return;
     }
   }
+  auto &idxs = p_variable_ref.getIndices();
+  auto var_node = dynamic_cast<VariableNode *>(sym->node);
+  auto dims = var_node->getTypeSharedPtr()->getDimensions();
+  p_variable_ref.setType(std::make_shared<PType>(
+      var_node->getTypeSharedPtr().get()->getPrimitiveType(),
+      *(new std::vector<uint64_t>(dims.begin() + idxs.size(), dims.end()))));
 }
 
 void SemanticAnalyzer::visit(AssignmentNode &p_assignment) {

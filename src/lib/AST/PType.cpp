@@ -5,6 +5,7 @@ const char *kTypeString[] = {"void", "integer", "real", "boolean", "string"};
 // logical constness
 const char *PType::getPTypeCString() const {
   if (!m_type_string_is_valid) {
+    m_type_string = "";
     m_type_string += kTypeString[static_cast<size_t>(m_type)];
 
     if (m_dimensions.size() != 0) {

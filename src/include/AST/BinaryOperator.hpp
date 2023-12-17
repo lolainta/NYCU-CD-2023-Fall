@@ -23,8 +23,13 @@ class BinaryOperatorNode final : public ExpressionNode {
         m_left_operand(p_left_operand),
         m_right_operand(p_right_operand) {}
 
+  Operator getOp() const { return m_op; }
+
   const char *getOpCString() const {
     return kOpString[static_cast<size_t>(m_op)];
+  }
+  std::pair<ExpressionNode *, ExpressionNode *> getOperands() const {
+    return std::make_pair(m_left_operand.get(), m_right_operand.get());
   }
 
   void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
