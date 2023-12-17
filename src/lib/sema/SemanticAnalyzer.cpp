@@ -42,6 +42,7 @@ void SemanticAnalyzer::printError(const std::string &msg,
 void SemanticAnalyzer::visit(ProgramNode &p_program) {
   sm.pushScope();
   ADD_SYMBOL(p_program.getNameCString(), "program", "void", "", &p_program);
+  sm.pushContext(sm.getSymbol(p_program.getNameCString()));
   p_program.visitChildNodes(*this);
   sm.dumpLastScope();
   sm.popScope();
@@ -87,7 +88,7 @@ void SemanticAnalyzer::visit(FunctionNode &p_function) {
   ADD_SYMBOL(p_function.getNameCString(), "function",
              p_function.getReturnTypeCString(),
              p_function.getParametersTypeCString(), &p_function);
-
+  sm.pushContext(sm.getSymbol(p_function.getNameCString()));
   sm.pushScope();
   for_each(p_function.getParameters().begin(), p_function.getParameters().end(),
            [&](auto &param_node) {
@@ -501,14 +502,33 @@ void SemanticAnalyzer::visit(ForNode &p_for) {
 }
 
 void SemanticAnalyzer::visit(ReturnNode &p_return) {
-  /*
-   * TODO:
-   *
-   * 1. Push a new symbol table if this node forms a scope.
-   * 2. Insert the symbol into current symbol table if this node is related to
-   *    declaration (ProgramNode, VariableNode, FunctionNode).
-   * 3. Travere child nodes of this node.
-   * 4. Perform semantic analyses of this node.
-   * 5. Pop the symbol table pushed at the 1st step.
-   */
+  p_return.visitChildNodes(*this);
+  auto ret = p_return.getReturnValue();
+  if (ret->isError()) {
+    return;
+  }
+  auto context = sm.getContext();
+  assert(context != nullptr);
+  if (context->kind == "function") {
+    auto func = dynamic_cast<FunctionNode *>(context->node);
+    if (strcmp(ret->getTypeCString(), func->getReturnTypeCString())) {
+      char error_msg[128];
+      snprintf(error_msg, sizeof(error_msg),
+               "return '%s' from a function with return type '%s'",
+               ret->getTypeCString(), func->getReturnTypeCString());
+      printError(error_msg, ret->getLocation());
+      return;
+    }
+  } else {
+    // std::cout << context->kind << std::endl;
+    // // assert(context->kind == "program");
+    if (ret != nullptr) {
+      char error_msg[128];
+      snprintf(error_msg, sizeof(error_msg),
+               "program/procedure should not return a value");
+      printError(error_msg, p_return.getLocation());
+      return;
+    }
+  }
+  sm.popContext();
 }

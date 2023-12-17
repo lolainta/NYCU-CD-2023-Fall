@@ -65,8 +65,12 @@ bool SymbolManager::addSymbol(const std::string &name, const std::string &kind,
       }) != tables.rend()) {
     return false;
   }
-  return this->tables.back()->addSymbol(
-      SymbolEntry(name, kind, tables.size() - 1, type, attribute, node));
+
+  if (this->tables.back()->addSymbol(
+          SymbolEntry(name, kind, tables.size() - 1, type, attribute, node))) {
+    return true;
+  }
+  return false;
 }
 
 bool SymbolManager::addSymbol(const std::string &name, const std::string &kind,

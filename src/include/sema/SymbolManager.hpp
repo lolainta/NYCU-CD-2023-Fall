@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cassert>
+#include <iostream>
 #include <stack>
 #include <string>
 #include <vector>
@@ -77,7 +79,23 @@ class SymbolManager {
     }
     return nullptr;
   }
+  SymbolEntry *getContext() {
+    if (contextStack.empty()) {
+      return nullptr;
+    }
+    return contextStack.top();
+  }
+  void pushContext(SymbolEntry *entry) {
+    // std::cout << "push context: " << entry->name << std::endl;
+    contextStack.push(entry);
+  }
+  void popContext() {
+    assert(!contextStack.empty());
+    // std::cout << "pop context: " << contextStack.top()->name << std::endl;
+    contextStack.pop();
+  }
 
  private:
   std::vector<SymbolTable *> tables;
+  std::stack<SymbolEntry *> contextStack;
 };
