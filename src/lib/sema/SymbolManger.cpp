@@ -65,7 +65,9 @@ bool SymbolManager::addSymbol(const std::string &name, const std::string &kind,
 
 void SymbolManager::popScope() { tables.pop_back(); }
 
-void SymbolManager::dumpLastScope() { tables.back()->dump(); }
+void SymbolManager::dumpLastScope() {
+  if (verbose) tables.back()->dump();
+}
 
 void SymbolManager::popContext() {
   if (contextStack.empty()) {

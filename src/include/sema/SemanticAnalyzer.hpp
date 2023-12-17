@@ -16,10 +16,11 @@ class SemanticAnalyzer final : public AstNodeVisitor {
   std::vector<std::string> lines;
   void printError(const std::string &, const Location &) const;
   mutable bool error = false;
+  bool verbose;
 
  public:
   ~SemanticAnalyzer() = default;
-  SemanticAnalyzer(const std::string &p_filename);
+  SemanticAnalyzer(const std::string &p_filename, bool verbose);
 
   void visit(ProgramNode &p_program) override;
   void visit(DeclNode &p_decl) override;

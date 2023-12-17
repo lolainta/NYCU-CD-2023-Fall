@@ -30,7 +30,7 @@ char current_line[MAX_LINE_LENG];
 
 static uint32_t opt_src = 1;
 static uint32_t opt_tok = 1;
-static uint32_t opt_sym = 1;
+uint32_t opt_sym = 1;
 static char string_literal[MAX_LINE_LENG];
 static char *current_line_ptr = current_line;
 

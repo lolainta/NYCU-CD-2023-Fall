@@ -10,14 +10,15 @@
 #include "AST/PType.hpp"
 #include "visitor/AstNodeInclude.hpp"
 
-SemanticAnalyzer::SemanticAnalyzer(const std::string &p_filename)
-    : filename(p_filename) {
+SemanticAnalyzer::SemanticAnalyzer(const std::string &p_filename, bool verbose)
+    : filename(p_filename), verbose(verbose) {
   std::ifstream fin(p_filename.c_str(), std::ios::in);
   std::string line;
   while (getline(fin, line)) {
     lines.push_back(line);
   }
   fin.close();
+  sm.setVerbose(verbose);
 }
 
 void SemanticAnalyzer::printError(const std::string &msg,

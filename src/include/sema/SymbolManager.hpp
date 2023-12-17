@@ -86,8 +86,10 @@ class SymbolManager {
     return contextStack.top();
   }
   void popContext();
+  void setVerbose(bool verbose) { this->verbose = verbose; }
 
  private:
+  bool verbose;
   std::vector<SymbolTable *> tables;
   std::stack<SymbolEntry *> contextStack;
 };
