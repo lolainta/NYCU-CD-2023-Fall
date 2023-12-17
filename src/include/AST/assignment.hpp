@@ -20,6 +20,7 @@ class AssignmentNode final : public AstNode {
 
   const VariableReferenceNode *getLvalue() const { return m_lvalue.get(); }
   const ExpressionNode *getRvalue() const { return m_expr.get(); }
+  ExpressionNode *getRvalue() { return m_expr.get(); }
 
   void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
   void visitChildNodes(AstNodeVisitor &p_visitor) override;

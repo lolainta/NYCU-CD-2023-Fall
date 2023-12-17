@@ -27,6 +27,9 @@ class ConstantValueNode final : public ExpressionNode {
   }
 
   void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
+  Constant::ConstantValue getConstantValue() const {
+    return m_constant_ptr->getConstantValue();
+  }
 };
 
 #endif

@@ -32,6 +32,7 @@ class Constant {
 
   const PTypeSharedPtr &getTypeSharedPtr() const { return m_type; }
   const char *getConstantValueCString() const;
+  ConstantValue getConstantValue() const { return m_value; }
 };
 
 #endif

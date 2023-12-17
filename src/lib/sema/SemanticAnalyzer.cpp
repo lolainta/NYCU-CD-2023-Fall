@@ -475,6 +475,27 @@ void SemanticAnalyzer::visit(ForNode &p_for) {
   p_for.getBody()->visitChildNodes(*this);
   sm.dumpLastScope();
   sm.popScope();
+  auto lb = dynamic_cast<ConstantValueNode *>(p_for.getInitStmt()->getRvalue());
+  auto ub = dynamic_cast<ConstantValueNode *>(p_for.getEndCondition());
+  if (lb->isError() or ub->isError()) {
+    return;
+  }
+  if (strcmp(lb->getTypeSharedPtr().get()->getPTypeCString(), "integer") or
+      strcmp(ub->getTypeSharedPtr().get()->getPTypeCString(), "integer")) {
+    char error_msg[128];
+    snprintf(error_msg, sizeof(error_msg),
+             "the expression of lower bound and upper bound must be integer "
+             "type");
+    printError(error_msg, p_for.getLocation());
+  }
+  if (lb->getConstantValue().integer > ub->getConstantValue().integer) {
+    char error_msg[128];
+    snprintf(error_msg, sizeof(error_msg),
+             "the lower bound and upper bound of iteration count must be in "
+             "the incremental order");
+    printError(error_msg, p_for.getLocation());
+  }
+
   sm.dumpLastScope();
   sm.popScope();
 }
