@@ -451,17 +451,17 @@ void SemanticAnalyzer::visit(IfNode &p_if) {
 }
 
 void SemanticAnalyzer::visit(WhileNode &p_while) {
-  /*
-   * TODO:
-   *
-   * 1. Push a new symbol table if this node forms a scope.
-   * 2. Insert the symbol into current symbol table if this node is related to
-   *    declaration (ProgramNode, VariableNode, FunctionNode).
-   * 3. Travere child nodes of this node.
-   * 4. Perform semantic analyses of this node.
-   * 5. Pop the symbol table pushed at the 1st step.
-   */
   p_while.visitChildNodes(*this);
+  auto cond = p_while.getCondition();
+  if (cond->isError()) {
+    return;
+  }
+  if (strcmp(cond->getTypeSharedPtr().get()->getPTypeCString(), "boolean")) {
+    char error_msg[128];
+    snprintf(error_msg, sizeof(error_msg),
+             "the expression of condition must be boolean type");
+    printError(error_msg, cond->getLocation());
+  }
 }
 
 void SemanticAnalyzer::visit(ForNode &p_for) {
