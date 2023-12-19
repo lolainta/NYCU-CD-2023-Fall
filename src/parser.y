@@ -31,6 +31,7 @@
 #include <cstring>
 
 #define YYLTYPE yyltype
+#define YY_USER_ACTION filename = yyin;
 
 typedef struct YYLTYPE {
     uint32_t first_line;
@@ -43,6 +44,7 @@ extern int32_t line_num;    /* declared in scanner.l */
 extern char current_line[]; /* declared in scanner.l */
 extern FILE *yyin;          /* declared by lex */
 extern char *yytext;        /* declared by lex */
+extern uint32_t opt_sym;         /* declared in scanner.l */
 
 static AstNode *root;
 
@@ -774,15 +776,16 @@ int main(int argc, const char *argv[]) {
         root->accept(ast_dumper);
     }
 
-    SemanticAnalyzer sema_analyzer;
+
+    SemanticAnalyzer sema_analyzer(argv[1], opt_sym);
     root->accept(sema_analyzer);
 
-    // TODO: do not print this if there's any semantic error
-    printf("\n"
-           "|---------------------------------------------------|\n"
-           "|  There is no syntactic error and semantic error!  |\n"
-           "|---------------------------------------------------|\n");
-
+    if (!sema_analyzer.hasError()){
+      puts("");
+      puts("|---------------------------------------------------|");
+      puts("|  There is no syntactic error and semantic error!  |");
+      puts("|---------------------------------------------------|");
+    }
     delete root;
     fclose(yyin);
     yylex_destroy();
