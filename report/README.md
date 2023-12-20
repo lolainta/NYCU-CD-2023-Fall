@@ -1,9 +1,9 @@
 # hw4 report
 
-|||
+|Field|Value|
 |-:|:-|
-|Name|yourname|
-|ID|your student id|
+|Name|LolaInTa Chi|
+|ID|198559994|
 
 ## How much time did you spend on this project
 
