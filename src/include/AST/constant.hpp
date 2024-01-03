@@ -30,11 +30,11 @@ class Constant {
   Constant(const PTypeSharedPtr &p_type, const ConstantValue value)
       : m_type(p_type), m_value(value) {}
 
-    const PType *getTypePtr() const { return m_type.get(); }
-    const PTypeSharedPtr &getTypeSharedPtr() const { return m_type; }
-    const char *getConstantValueCString() const;
+  const PType *getTypePtr() const { return m_type.get(); }
+  const PTypeSharedPtr &getTypeSharedPtr() const { return m_type; }
+  const char *getConstantValueCString() const;
 
-    decltype(m_value.integer) integer() const { return m_value.integer; }
+  decltype(m_value.integer) integer() const { return m_value.integer; }
 };
 
 #endif

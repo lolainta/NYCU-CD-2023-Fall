@@ -25,23 +25,21 @@ class VariableNode final : public AstNode {
         m_type(p_type),
         m_constant_value_node_ptr(p_constant_value_node) {}
 
-    const std::string &getName() const { return m_name; }
-    const char *getNameCString() const { return m_name.c_str(); }
-    const char *getTypeCString() const { return m_type->getPTypeCString(); }
+  const std::string &getName() const { return m_name; }
+  const char *getNameCString() const { return m_name.c_str(); }
+  const char *getTypeCString() const { return m_type->getPTypeCString(); }
 
-    const PType *getTypePtr() const { return m_type.get(); }
+  const PType *getTypePtr() const { return m_type.get(); }
 
-    const Constant *getConstantPtr() const {
-        if (!m_constant_value_node_ptr) {
-            return nullptr;
-        }
-        return m_constant_value_node_ptr->getConstantPtr();
+  const Constant *getConstantPtr() const {
+    if (!m_constant_value_node_ptr) {
+      return nullptr;
     }
+    return m_constant_value_node_ptr->getConstantPtr();
+  }
 
-    void accept(AstNodeVisitor &p_visitor) override {
-        p_visitor.visit(*this);
-    }
-    void visitChildNodes(AstNodeVisitor &p_visitor) override;
+  void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
+  void visitChildNodes(AstNodeVisitor &p_visitor) override;
 };
 
 #endif

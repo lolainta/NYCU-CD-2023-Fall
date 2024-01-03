@@ -31,13 +31,13 @@ class VariableReferenceNode final : public ExpressionNode {
         m_name(p_name),
         m_indices(std::move(p_indices)) {}
 
-    const std::string &getName() const { return m_name; }
-    const char *getNameCString() const { return m_name.c_str(); }
+  const std::string &getName() const { return m_name; }
+  const char *getNameCString() const { return m_name.c_str(); }
 
-    const ExprNodes &getIndices() const { return m_indices; }
+  const ExprNodes &getIndices() const { return m_indices; }
 
-    void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
-    void visitChildNodes(AstNodeVisitor &p_visitor) override;
+  void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
+  void visitChildNodes(AstNodeVisitor &p_visitor) override;
 };
 
 #endif

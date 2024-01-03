@@ -16,10 +16,10 @@ class PrintNode final : public AstNode {
   PrintNode(const uint32_t line, const uint32_t col, ExpressionNode *p_target)
       : AstNode{line, col}, m_target(p_target) {}
 
-    const ExpressionNode &getTarget() const { return *m_target.get(); }
+  const ExpressionNode &getTarget() const { return *m_target.get(); }
 
-    void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
-    void visitChildNodes(AstNodeVisitor &p_visitor) override;
+  void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
+  void visitChildNodes(AstNodeVisitor &p_visitor) override;
 };
 
 #endif
