@@ -23,12 +23,17 @@ class BinaryOperatorNode final : public ExpressionNode {
         m_left_operand(p_left_operand),
         m_right_operand(p_right_operand) {}
 
-  const char *getOpCString() const {
-    return kOpString[static_cast<size_t>(m_op)];
-  }
+    Operator getOp() const { return m_op; }
 
-  void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
-  void visitChildNodes(AstNodeVisitor &p_visitor) override;
+    const char *getOpCString() const {
+        return kOpString[static_cast<size_t>(m_op)];
+    }
+
+    const ExpressionNode &getLeftOperand() const { return *m_left_operand.get(); }
+    const ExpressionNode &getRightOperand() const { return *m_right_operand.get(); }
+
+    void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
+    void visitChildNodes(AstNodeVisitor &p_visitor) override;
 };
 
 #endif

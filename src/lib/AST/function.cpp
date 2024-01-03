@@ -2,7 +2,20 @@
 
 #include <algorithm>
 
-#include "AST/decl.hpp"
+FunctionNode::DeclNodes::size_type
+FunctionNode::getParametersNum(const DeclNodes &p_parameters) {
+    FunctionNode::DeclNodes::size_type num = 0;
+
+    for (const auto &decl_node : p_parameters) {
+        num += decl_node->getVariables().size();
+    }
+
+    return num;
+}
+
+std::string
+FunctionNode::getParametersTypeString(const DeclNodes &p_parameters) {
+    std::string type_string;
 
 std::string FunctionNode::getParametersTypeString(
     const DeclNodes &p_parameters) {
@@ -44,4 +57,10 @@ void FunctionNode::visitChildNodes(AstNodeVisitor &p_visitor) {
   if (m_body) {
     visit_ast_node(m_body);
   }
+}
+
+void FunctionNode::visitBodyChildNodes(AstNodeVisitor &p_visitor) {
+    if (m_body) {
+        m_body->visitChildNodes(p_visitor);
+    }
 }

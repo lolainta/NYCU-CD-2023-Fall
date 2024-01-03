@@ -16,8 +16,10 @@ class ReadNode final : public AstNode {
            VariableReferenceNode *p_target)
       : AstNode{line, col}, m_target(p_target) {}
 
-  void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
-  void visitChildNodes(AstNodeVisitor &p_visitor) override;
+    const VariableReferenceNode &getTarget() const { return *m_target.get(); }
+
+    void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
+    void visitChildNodes(AstNodeVisitor &p_visitor) override;
 };
 
 #endif

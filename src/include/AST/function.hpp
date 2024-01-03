@@ -5,9 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "AST/CompoundStatement.hpp"
-#include "AST/ast.hpp"
-#include "visitor/AstNodeVisitor.hpp"
+class SymbolTable;
 
 class FunctionNode final : public AstNode {
  public:
@@ -22,24 +20,37 @@ class FunctionNode final : public AstNode {
   mutable std::string m_prototype_string;
   mutable bool m_prototype_string_is_valid = false;
 
- public:
-  ~FunctionNode() = default;
-  FunctionNode(const uint32_t line, const uint32_t col,
-               const char *const p_name, DeclNodes &p_decl_nodes,
-               PType *const p_ret_type, CompoundStatementNode *const p_body)
-      : AstNode{line, col},
-        m_name(p_name),
-        m_parameters(std::move(p_decl_nodes)),
-        m_ret_type(p_ret_type),
-        m_body(p_body) {}
+    const SymbolTable *m_symbol_table_ptr = nullptr;
 
-  static std::string getParametersTypeString(const DeclNodes &p_parameters);
+  public:
+    ~FunctionNode() = default;
+    FunctionNode(const uint32_t line, const uint32_t col,
+                 const char *const p_name, DeclNodes &p_decl_nodes,
+                 PType *const p_ret_type, CompoundStatementNode *const p_body)
+        : AstNode{line, col}, m_name(p_name),
+          m_parameters(std::move(p_decl_nodes)), m_ret_type(p_ret_type),
+          m_body(p_body) {}
 
-  const char *getNameCString() const { return m_name.c_str(); }
-  const char *getPrototypeCString() const;
+    static std::string getParametersTypeString(const DeclNodes &p_parameters);
+    static DeclNodes::size_type getParametersNum(const DeclNodes &p_parameters);
 
-  void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
-  void visitChildNodes(AstNodeVisitor &p_visitor) override;
+    const std::string &getName() const { return m_name; }
+    const char *getNameCString() const { return m_name.c_str(); }
+    const char *getPrototypeCString() const;
+
+    const DeclNodes &getParameters() const { return m_parameters; }
+
+    const PType *getTypePtr() const { return m_ret_type.get(); }
+
+    const SymbolTable *getSymbolTable() const { return m_symbol_table_ptr; }
+    void setSymbolTable(const SymbolTable *p_symbol_table) {
+        m_symbol_table_ptr = p_symbol_table;
+    }
+
+    void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
+    void visitChildNodes(AstNodeVisitor &p_visitor) override;
+
+    void visitBodyChildNodes(AstNodeVisitor &p_visitor);
 };
 
 #endif

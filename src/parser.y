@@ -43,6 +43,7 @@ typedef struct YYLTYPE {
 
 extern int32_t line_num;    /* declared in scanner.l */
 extern char current_line[]; /* declared in scanner.l */
+extern uint32_t opt_dmp;    /* declared in scanner.l */
 extern FILE *yyin;          /* declared by lex */
 extern char *yytext;        /* declared by lex */
 
@@ -163,8 +164,6 @@ Program:
                                *$3, *$4, $5);
 
         free($1);
-        delete $3;
-        delete $4;
     }
 ;
 
@@ -466,8 +465,6 @@ CompoundStatement:
     END {
         $$ = new CompoundStatementNode(@1.first_line, @1.first_column,
                                        *$2, *$3);
-        delete $2;
-        delete $3;
     }
 ;
 
@@ -776,17 +773,19 @@ int main(int argc, const char *argv[]) {
         root->accept(ast_dumper);
     }
 
-    SemanticAnalyzer sema_analyzer;
+    SemanticAnalyzer sema_analyzer(opt_dmp);
     root->accept(sema_analyzer);
 
-    CodeGenerator code_generator(argv[1], (argc == 4) ? argv[3] : "");
+    CodeGenerator code_generator(argv[1], (argc == 4) ? argv[3] : "",
+                                 sema_analyzer.getSymbolManager());
     root->accept(code_generator);
 
-    // TODO: do not print this if there's any semantic error
-    printf("\n"
-           "|---------------------------------------------------|\n"
-           "|  There is no syntactic error and semantic error!  |\n"
-           "|---------------------------------------------------|\n");
+    if (!sema_analyzer.hasError()) {
+        printf("\n"
+               "|---------------------------------------------------|\n"
+               "|  There is no syntactic error and semantic error!  |\n"
+               "|---------------------------------------------------|\n");
+    }
 
     delete root;
     fclose(yyin);
