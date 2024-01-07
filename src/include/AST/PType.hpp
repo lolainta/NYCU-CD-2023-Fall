@@ -25,6 +25,19 @@ class PType {
   mutable std::string m_type_string;
   mutable bool m_type_string_is_valid = false;
 
+  size_t getPrimitiveSize() const {
+    if (isPrimitiveInteger())
+      return 4;
+    else if (isPrimitiveReal())
+      return 8;
+    else if (isPrimitiveBool())
+      return 1;
+    else if (isPrimitiveString())
+      return 8;
+    else
+      return 0;
+  }
+
  public:
   ~PType() = default;
   PType(const PrimitiveTypeEnum type) : m_type(type) {}
@@ -68,6 +81,14 @@ class PType {
   }
 
   bool compare(const PType *p_type) const;
+
+  size_t getByteSize() const {
+    size_t size = getPrimitiveSize();
+    for (auto &dim : m_dimensions) {
+      size *= dim;
+    }
+    return size;
+  }
 };
 
 #endif

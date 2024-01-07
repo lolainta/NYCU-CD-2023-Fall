@@ -13,6 +13,7 @@ class CodeGenerator final : public AstNodeVisitor {
   const SymbolManager *m_symbol_manager_ptr;
   std::string m_source_file_path;
   std::unique_ptr<FILE> m_output_file;
+  bool m_is_global_scope = false;
 
  public:
   ~CodeGenerator() = default;

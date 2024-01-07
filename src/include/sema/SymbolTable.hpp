@@ -56,6 +56,7 @@ class SymbolEntry {
   size_t m_level;
   const PType *m_p_type;
   Attribute m_attribute;
+  size_t m_offset = 0;
 
  public:
   ~SymbolEntry() = default;
@@ -88,6 +89,9 @@ class SymbolEntry {
   const PType *getTypePtr() const { return m_p_type; };
 
   const Attribute &getAttribute() const { return m_attribute; };
+
+  const size_t getOffset() const { return m_offset; };
+  void setOffset(const size_t offset) { m_offset = offset; };
 };
 
 class SymbolTable {
