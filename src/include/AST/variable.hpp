@@ -14,6 +14,7 @@ class VariableNode final : public AstNode {
   std::string m_name;
   PTypeSharedPtr m_type;
   std::shared_ptr<ConstantValueNode> m_constant_value_node_ptr;
+  bool m_is_function_param = false;
 
  public:
   ~VariableNode() = default;
@@ -37,6 +38,9 @@ class VariableNode final : public AstNode {
     }
     return m_constant_value_node_ptr->getConstantPtr();
   }
+
+  bool isFunctionParam() const { return m_is_function_param; }
+  void setFunctionParam() { m_is_function_param = true; }
 
   void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
   void visitChildNodes(AstNodeVisitor &p_visitor) override;

@@ -125,8 +125,7 @@ void SymbolManager::reconstructHashTableFromSymbolTable(
   if (!p_table) {
     return;
   }
-  size_t offset = 8;
-
+  size_t param_idx = 0;
   auto construct_entry_on_hash_map = [&](const auto &p_entry_ptr) {
     auto existence_pair =
         checkExistence(p_entry_ptr->getName(), p_entry_ptr->getLevel());
@@ -142,18 +141,19 @@ void SymbolManager::reconstructHashTableFromSymbolTable(
       m_hash_entries.emplace(std::piecewise_construct,
                              std::forward_as_tuple(p_entry_ptr->getName()),
                              std::forward_as_tuple(p_entry_ptr.get()));
-      offset += p_entry_ptr->getTypePtr()->getByteSize();
-      p_entry_ptr->setOffset(offset);
     }
+    offset += p_entry_ptr->getTypePtr()->getByteSize();
+    p_entry_ptr->setOffset(offset);
+    if (p_entry_ptr->getKind() == SymbolEntry::KindEnum::kParameterKind) {
+      p_entry_ptr->setParamIdx(param_idx++);
+    }
+    printf("entry: %s, level: %lu, offset: %lu, param_idx: %ld\n",
+           p_entry_ptr->getNameCString(), p_entry_ptr->getLevel(),
+           p_entry_ptr->getOffset(), (p_entry_ptr->getParamIdx()));
   };
 
   for_each(p_table->getEntries().begin(), p_table->getEntries().end(),
            construct_entry_on_hash_map);
-  for (auto &table : m_hash_entries) {
-    printf("entry: %s size: %d offset: %d level: %d\n", table.first.c_str(),
-           table.second->getTypePtr()->getByteSize(), table.second->getOffset(),
-           table.second->getLevel());
-  }
 }
 
 void SymbolManager::removeSymbolsFromHashTable(
@@ -280,7 +280,7 @@ const SymbolEntry *SymbolManager::lookup(const std::string &p_name) const {
   if (search_result != m_hash_entries.end()) {
     return search_result->second;
   }
-  printf("hash entries: %d\n", m_hash_entries.size());
+  printf("hash entries: %ld\n", m_hash_entries.size());
   for (auto &table : m_hash_entries) {
     printf("\tentry: %s\n", table.first.c_str());
   }

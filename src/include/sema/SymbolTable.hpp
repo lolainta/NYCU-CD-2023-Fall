@@ -57,6 +57,7 @@ class SymbolEntry {
   const PType *m_p_type;
   Attribute m_attribute;
   size_t m_offset = 0;
+  size_t m_param_idx = -1;
 
  public:
   ~SymbolEntry() = default;
@@ -92,6 +93,9 @@ class SymbolEntry {
 
   const size_t getOffset() const { return m_offset; };
   void setOffset(const size_t offset) { m_offset = offset; };
+
+  const size_t getParamIdx() const { return m_param_idx; };
+  void setParamIdx(const size_t param_idx) { m_param_idx = param_idx; };
 };
 
 class SymbolTable {
@@ -122,6 +126,8 @@ class SymbolManager {
  public:
   using Tables = std::vector<std::unique_ptr<SymbolTable>>;
   using NameEntryMap = std::map<std::string, SymbolEntry *>;
+
+  mutable size_t offset = 8;
 
  private:
   Tables m_in_use_tables;

@@ -773,7 +773,7 @@ int main(int argc, const char *argv[]) {
         root->accept(ast_dumper);
     }
 
-    SemanticAnalyzer sema_analyzer(opt_dmp);
+    SemanticAnalyzer sema_analyzer(1);
     root->accept(sema_analyzer);
 
     CodeGenerator code_generator(argv[1], (argc == 4) ? argv[3] : "",
