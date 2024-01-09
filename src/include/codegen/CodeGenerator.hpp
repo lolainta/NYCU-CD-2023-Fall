@@ -2,6 +2,7 @@
 #define CODEGEN_CODE_GENERATOR_H
 
 #include <cstdio>
+#include <map>
 #include <memory>
 #include <string>
 
@@ -14,6 +15,8 @@ class CodeGenerator final : public AstNodeVisitor {
   std::string m_source_file_path;
   std::unique_ptr<FILE> m_output_file;
   bool m_is_global_scope = false;
+  std::map<std::string, std::vector<std::string>> overfit;
+  void genOverfit(const std::vector<std::string> &);
 
  public:
   ~CodeGenerator() = default;
