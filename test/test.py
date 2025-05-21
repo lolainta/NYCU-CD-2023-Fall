@@ -136,7 +136,7 @@ class Grader:
             executable_file = "%s/%s" % (self.executable_file_path,
                                          self.bonus_cases[case_id])
 
-        clist = ["spike", "--isa=RV32",
+        clist = ["spike", "--isa=RV32IMAFDC",
                  "/risc-v/riscv32-unknown-elf/bin/pk", executable_file]
         try:
             proc = subprocess.Popen(
