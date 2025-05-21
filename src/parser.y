@@ -19,11 +19,13 @@
 #include "AST/variable.hpp"
 #include "AST/while.hpp"
 
+#include "codegen/CodeGenerator.hpp"
+#include "sema/SemanticAnalyzer.hpp"
+
 #include "AST/constant.hpp"
 #include "AST/operator.hpp"
 
 #include "AST/AstDumper.hpp"
-#include "sema/SemanticAnalyzer.hpp"
 
 #include <cstdint>
 #include <cstdio>
@@ -31,7 +33,6 @@
 #include <cstring>
 
 #define YYLTYPE yyltype
-#define YY_USER_ACTION filename = yyin;
 
 typedef struct YYLTYPE {
     uint32_t first_line;
@@ -42,9 +43,9 @@ typedef struct YYLTYPE {
 
 extern int32_t line_num;    /* declared in scanner.l */
 extern char current_line[]; /* declared in scanner.l */
+extern uint32_t opt_dmp;    /* declared in scanner.l */
 extern FILE *yyin;          /* declared by lex */
 extern char *yytext;        /* declared by lex */
-extern uint32_t opt_sym;         /* declared in scanner.l */
 
 static AstNode *root;
 
@@ -163,8 +164,6 @@ Program:
                                *$3, *$4, $5);
 
         free($1);
-        delete $3;
-        delete $4;
     }
 ;
 
@@ -466,8 +465,6 @@ CompoundStatement:
     END {
         $$ = new CompoundStatementNode(@1.first_line, @1.first_column,
                                        *$2, *$3);
-        delete $2;
-        delete $3;
     }
 ;
 
@@ -759,7 +756,7 @@ void yyerror(const char *msg) {
 
 int main(int argc, const char *argv[]) {
     if (argc < 2) {
-        fprintf(stderr, "Usage: %s <filename> [--dump-ast]\n", argv[0]);
+        fprintf(stderr, "Usage: %s <filename> --save-path [save path]\n", argv[0]);
         exit(-1);
     }
 
@@ -776,16 +773,20 @@ int main(int argc, const char *argv[]) {
         root->accept(ast_dumper);
     }
 
-
-    SemanticAnalyzer sema_analyzer(argv[1], opt_sym);
+    SemanticAnalyzer sema_analyzer(1);
     root->accept(sema_analyzer);
 
-    if (!sema_analyzer.hasError()){
-      puts("");
-      puts("|---------------------------------------------------|");
-      puts("|  There is no syntactic error and semantic error!  |");
-      puts("|---------------------------------------------------|");
+    CodeGenerator code_generator(argv[1], (argc == 4) ? argv[3] : "",
+                                 sema_analyzer.getSymbolManager());
+    root->accept(code_generator);
+
+    if (!sema_analyzer.hasError()) {
+        printf("\n"
+               "|---------------------------------------------------|\n"
+               "|  There is no syntactic error and semantic error!  |\n"
+               "|---------------------------------------------------|\n");
     }
+
     delete root;
     fclose(yyin);
     yylex_destroy();

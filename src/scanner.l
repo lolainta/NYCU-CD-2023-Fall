@@ -20,17 +20,19 @@
 #define LIST_LITERAL(name, literal) do { LIST_SOURCE; if(opt_tok) printf("<%s: %s>\n", name, literal); } while(0)
 #define MAX_LINE_LENG               512
 #define MAX_ID_LENG                 32
+#define MAX_LINE_NUM        200
 
 // prevent undefined reference error in newer version of flex
 extern "C" int yylex(void);
 
 uint32_t line_num = 1;
 uint32_t col_num = 1;
+long line_positions[MAX_LINE_NUM + 1] = {0}; // +1 since we use 1-based
 char current_line[MAX_LINE_LENG];
 
 static uint32_t opt_src = 1;
 static uint32_t opt_tok = 1;
-uint32_t opt_sym = 1;
+uint32_t opt_dmp = 1;
 static char string_literal[MAX_LINE_LENG];
 static char *current_line_ptr = current_line;
 
@@ -189,7 +191,7 @@ nonzero_float ({nonzero_integer}\.(0|[0-9]*[1-9]))|(0\.([0-9]*[1-9]))
         opt_tok = (yytext[4] == '+') ? 1 : 0;
         break;
     case 'D':
-        opt_sym = (yytext[4] == '+') ? 1 : 0;
+        opt_dmp = (yytext[4] == '+') ? 1 : 0;
         break;
     }
 }
@@ -207,6 +209,8 @@ nonzero_float ({nonzero_integer}\.(0|[0-9]*[1-9]))|(0\.([0-9]*[1-9]))
     if (opt_src) {
         printf("%d: %s\n", line_num, current_line);
     }
+    line_positions[line_num + 1] = line_positions[line_num] +
+                                   (current_line_ptr - current_line + 1);
     ++line_num;
     col_num = 1;
     current_line[0] = '\0';

@@ -25,25 +25,70 @@ class PType {
   mutable std::string m_type_string;
   mutable bool m_type_string_is_valid = false;
 
+  size_t getPrimitiveSize() const {
+    if (isPrimitiveInteger())
+      return 4;
+    else if (isPrimitiveReal())
+      return 8;
+    else if (isPrimitiveBool())
+      return 1;
+    else if (isPrimitiveString())
+      return 8;
+    else
+      return 0;
+  }
+
  public:
   ~PType() = default;
   PType(const PrimitiveTypeEnum type) : m_type(type) {}
-  PType(const PrimitiveTypeEnum type, std::vector<uint64_t> &p_dims)
-      : m_type(type), m_dimensions(std::move(p_dims)) {}
-  PType(const PTypeSharedPtr &p_type)
-      : m_type(p_type->getPrimitiveType()),
-        m_dimensions(p_type->getDimensions()) {}
 
-  void setPrimitiveType(const PrimitiveTypeEnum type) {
-    m_type = type;
-    m_type_string_is_valid = false;
-  }
   void setDimensions(std::vector<uint64_t> &p_dims) {
     m_dimensions = std::move(p_dims);
   }
-  const std::vector<uint64_t> &getDimensions() const { return m_dimensions; }
+
   PrimitiveTypeEnum getPrimitiveType() const { return m_type; }
   const char *getPTypeCString() const;
+
+  const std::vector<uint64_t> &getDimensions() const { return m_dimensions; }
+
+  PType *getStructElementType(const std::size_t nth) const;
+
+  bool isPrimitiveInteger() const {
+    return m_type == PrimitiveTypeEnum::kIntegerType;
+  }
+  bool isPrimitiveReal() const {
+    return m_type == PrimitiveTypeEnum::kRealType;
+  }
+  bool isPrimitiveBool() const {
+    return m_type == PrimitiveTypeEnum::kBoolType;
+  }
+  bool isPrimitiveString() const {
+    return m_type == PrimitiveTypeEnum::kStringType;
+  }
+
+  bool isInteger() const {
+    return isPrimitiveInteger() && m_dimensions.empty();
+  }
+  bool isReal() const { return isPrimitiveReal() && m_dimensions.empty(); }
+  bool isBool() const { return isPrimitiveBool() && m_dimensions.empty(); }
+  bool isString() const { return isPrimitiveString() && m_dimensions.empty(); }
+  bool isVoid() const {
+    return m_type == PrimitiveTypeEnum::kVoidType && m_dimensions.empty();
+  }
+
+  bool isScalar() const {
+    return m_dimensions.empty() && m_type != PrimitiveTypeEnum::kVoidType;
+  }
+
+  bool compare(const PType *p_type) const;
+
+  size_t getByteSize() const {
+    size_t size = getPrimitiveSize();
+    for (auto &dim : m_dimensions) {
+      size *= dim;
+    }
+    return size;
+  }
 };
 
 #endif

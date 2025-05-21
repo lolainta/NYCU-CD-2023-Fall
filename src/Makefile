@@ -22,11 +22,15 @@ VISITOR := $(shell find $(VISITORDIR) -name '*.cpp')
 SEMANTICDIR = lib/sema/
 SEMANTIC := $(shell find $(SEMANTICDIR) -name '*.cpp')
 
+CODEGENDIR = lib/codegen/
+CODEGEN := $(shell find $(CODEGENDIR) -name '*.cpp')
+
 SRC := $(AST) \
        $(VISITOR) \
-       $(SEMANTIC)
+       $(SEMANTIC) \
+       $(CODEGEN)
 
-EXEC = $(PARSER)
+EXEC = compiler
 OBJS = $(PARSER:=.cpp) \
        $(SCANNER:=.cpp) \
        $(SRC)
@@ -51,6 +55,6 @@ $(EXEC): $(OBJS)
 	$(CC) -o $@ $^ $(LIBS) $(INCLUDE)
 
 clean:
-	$(RM) $(DEPS) $(SCANNER:=.cpp) $(PARSER:=.cpp) $(PARSER:=.h) $(OBJS) $(EXEC)
+	$(RM) $(DEPS) $(SCANNER:=.cpp) $(PARSER:=.cpp) $(PARSER:=.h) $(PARSER:=.output) $(OBJS) $(EXEC)
 
 -include $(DEPS)

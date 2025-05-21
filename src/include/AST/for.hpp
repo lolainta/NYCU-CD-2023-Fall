@@ -7,12 +7,16 @@
 #include "AST/decl.hpp"
 #include "AST/expression.hpp"
 
+class SymbolTable;
+
 class ForNode final : public AstNode {
  private:
   std::unique_ptr<DeclNode> m_loop_var_decl;
   std::unique_ptr<AssignmentNode> m_init_stmt;
   std::unique_ptr<ExpressionNode> m_end_condition;
   std::unique_ptr<CompoundStatementNode> m_body;
+
+  const SymbolTable *m_symbol_table_ptr = nullptr;
 
  public:
   ~ForNode() = default;
@@ -25,11 +29,20 @@ class ForNode final : public AstNode {
         m_end_condition(p_end_condition),
         m_body(p_body) {}
 
+  const ConstantValueNode &getLowerBound() const;
+  const ConstantValueNode &getUpperBound() const;
+
+  DeclNode &getLoopVarDecl() const { return *m_loop_var_decl.get(); }
+  AssignmentNode &getInitStmt() const { return *m_init_stmt.get(); }
+  ExpressionNode &getEndCondition() const { return *m_end_condition.get(); }
+  CompoundStatementNode &getBody() const { return *m_body.get(); }
+
+  const SymbolTable *getSymbolTable() const { return m_symbol_table_ptr; }
+  void setSymbolTable(const SymbolTable *p_symbol_table) {
+    m_symbol_table_ptr = p_symbol_table;
+  }
+
   void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
-  DeclNode *getLoopVarDecl() const { return m_loop_var_decl.get(); }
-  AssignmentNode *getInitStmt() const { return m_init_stmt.get(); }
-  ExpressionNode *getEndCondition() const { return m_end_condition.get(); }
-  CompoundStatementNode *getBody() const { return m_body.get(); }
   void visitChildNodes(AstNodeVisitor &p_visitor) override;
 };
 

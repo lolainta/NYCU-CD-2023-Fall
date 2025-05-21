@@ -14,6 +14,7 @@ class VariableNode final : public AstNode {
   std::string m_name;
   PTypeSharedPtr m_type;
   std::shared_ptr<ConstantValueNode> m_constant_value_node_ptr;
+  bool m_is_function_param = false;
 
  public:
   ~VariableNode() = default;
@@ -25,16 +26,21 @@ class VariableNode final : public AstNode {
         m_type(p_type),
         m_constant_value_node_ptr(p_constant_value_node) {}
 
+  const std::string &getName() const { return m_name; }
   const char *getNameCString() const { return m_name.c_str(); }
   const char *getTypeCString() const { return m_type->getPTypeCString(); }
-  const char *getConstantValueCString() const {
-    if (m_constant_value_node_ptr == nullptr) {
-      return "";
+
+  const PType *getTypePtr() const { return m_type.get(); }
+
+  const Constant *getConstantPtr() const {
+    if (!m_constant_value_node_ptr) {
+      return nullptr;
     }
-    return m_constant_value_node_ptr->getConstantValueCString();
+    return m_constant_value_node_ptr->getConstantPtr();
   }
-  bool isConstant() const { return m_constant_value_node_ptr != nullptr; }
-  const PTypeSharedPtr &getTypeSharedPtr() const { return m_type; }
+
+  bool isFunctionParam() const { return m_is_function_param; }
+  void setFunctionParam() { m_is_function_param = true; }
 
   void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
   void visitChildNodes(AstNodeVisitor &p_visitor) override;

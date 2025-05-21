@@ -1,611 +1,1234 @@
-# Project Assignment 4 - Semantic Analyses
+# Project Assignment 5 - Code Generation
 
 **Introduction to Compiler Design by Prof. Yi-Ping You**
 
-### Due Date: 23:59, December 24, 2023
+Due Date: **23:59, January 12, 2024**
+
+**Late submission is not allowed**
+
+Your assignment is to generate `RISC-V instructions` for the **`P`** language based on the `AST` and `symbol table` that you have built in the previous assignments. The generated code will then be executed on a RISC-V simulator, called `Spike`.
+
+### The description video of homework:
+https://drive.google.com/drive/folders/1bxhnd03dAB2DbRrAsqgB13DjRHQMJVLW
 
 ---
 
-**Table of Contents**
-- [Project Assignment 4 - Semantic Analyses](#project-assignment-4---semantic-analyses)
-	- [Overview](#overview)
-	- [Assignment Description](#assignment-description)
-		- [0x00. Introduction to Symbol Table](#0x00-introduction-to-symbol-table)
-			- [Implementation](#implementation)
-			- [Operations](#operations)
-			- [Scope Management](#scope-management)
-			- [Scope Rules](#scope-rules)
-			- [Output Format](#output-format)
-			- [Pseudocomments](#pseudocomments)
-		- [0x01. Semantic Analysis](#0x01-semantic-analysis)
-		- [0x02. Semantic Definition](#0x02-semantic-definition)
-			- [Symbol Table](#symbol-table)
-			- [Variable Declaration](#variable-declaration)
-			- [Variable Reference](#variable-reference)
-			- [Binary/Unary operator](#binaryunary-operator)
-			- [Type Coercion and Comparison](#type-coercion-and-comparison)
-			- [Function Invocation](#function-invocation)
-			- [Print and Read Statement](#print-and-read-statement)
-			- [Assignment](#assignment)
-			- [If and While](#if-and-while)
-			- [For](#for)
-			- [Return](#return)
-	- [Implementation Hints](#implementation-hints)
-		- [Recommended Workflow of Developing](#recommended-workflow-of-developing)
-		- [Symbol Table Construction](#symbol-table-construction)
-		- [Source Code Listing in Semantic Error](#source-code-listing-in-semantic-error)
-		- [Type Information Propagation](#type-information-propagation)
-	- [What Should Your Parser Do?](#what-should-your-parser-do)
-	- [Project Structure](#project-structure)
-	- [Assessment Rubrics (Grading)](#assessment-rubrics-grading)
-	- [Build and Execute](#build-and-execute)
-		- [Build Project](#build-project)
-		- [Test your parser](#test-your-parser)
-	- [Submitting the Assignment](#submitting-the-assignment)
+## Table of Contents
 
-## Overview
+- [Project Assignment 5 - Code Generation](#project-assignment-5---code-generation)
+  - [Table of Contents](#table-of-contents)
+  - [Assignment](#assignment)
+  - [Generating RISC-V Instructions](#generating-risc-v-instructions)
+    - [Initialization](#initialization)
+    - [Declarations of Variables and Constants](#declarations-of-variables-and-constants)
+      - [Global Variables](#global-variables)
+      - [Local Variables](#local-variables)
+      - [Global Constants](#global-constants)
+      - [Local Constants](#local-constants)
+    - [Expression](#expression)
+    - [Function Declaration and Invocation](#function-declaration-and-invocation)
+    - [Simple Statement](#simple-statement)
+    - [Conditional Statement](#conditional-statement)
+    - [For Statement and While Statement](#for-statement-and-while-statement)
+    - [Combining All Examples Above](#combining-all-examples-above)
+    - [Bonus](#bonus)
+      - [Boolean Type](#boolean-type)
+      - [Array Type](#array-type)
+      - [String Type](#string-type)
+      - [Real Type](#real-type)
+  - [Implementation Hints](#implementation-hints)
+    - [Using `C` compiler that targets RISC-V](#using-c-compiler-that-targets-risc-v)
+  - [Project Structure](#project-structure)
+  - [Assessment Rubrics (Grading)](#assessment-rubrics-grading)
+  - [Build and Execute](#build-and-execute)
+    - [Build Project](#build-project)
+    - [Test your compiler with the simulator](#test-your-compiler-with-the-simulator)
+    - [Simulator Commands](#simulator-commands)
+    - [Test your compiler with the RISC-V development board](#test-your-compiler-with-the-risc-v-development-board)
+  - [Submitting the Assignment](#submitting-the-assignment)
 
-In this assignment, you will extend your parser to perform semantic analyses for a given program written in `P` language using the information recorded in the AST, which has been constructed in the previous assignment.
+---
 
-This assignment requires you to construct a symbol table for performing semantic analyses this time and code generation in the last assignment.
-You should design it using feasible data structures.
+## Assignment
 
-> [!important]
-> DO NOT use string for everything, unless you're obsessed with parsing strings for extracting information from them.
+In order to keep this assignment simple, only the `integer` type is needed to be implemented and the `array` type is not considered. Your assignment is to generate `RISC-V` instructions for a `P` program that contains any of the following constructs:
 
-## Assignment Description
+ - Global variable or local variable declaration.
+ - Global constant or local constant declaration.
+ - Function declaration.
+ - Assign statement.
+ - Simple statement.
+ - Expressions with only `+` `-` (unary and binary) `*` `/` `mod` `function invocation` included.
+ - Function invocation statement.
+ - Conditional statement.
+ - For statement and while statement.
 
-The purpose of this assignment is to get you acquainted with semantic analysis. You'll learn what should be done to achieve it and how does it work.
+The generated `RISC-V` instructions should be saved in a file with the same name as the input `P` file but with a `.S` extension. In addition, the file should be stored in a directory, which is set by the flag `--save-path [save path]`. For example, the following command translates `./test.p` into `./output_riscv_code/test/test.S`.
 
-### 0x00. Introduction to Symbol Table
+```
+./compiler test.p --save-path ./output_riscv_code/test
+```
 
-In the previous assignment, we have constructed an AST for the given program. In a program, the most common behavior is that we declare some variables and use them later.
-However, it's quite painful to walk back and forth between a declaration node and a variable reference node in the AST.
+<div align="right">
+    <b><a href="#table-of-contents">↥ back to menu</a></b>
+</div>
 
-As a result, we need to maintain a data structure, symbol table, which stores some information when we encounter a declaration. After that, we can directly get information from the symbol table when a reference is analyzed instead of going back to find the declaration.
+## Generating RISC-V Instructions
 
-A symbol table is used for the following purposes:
+ > In the following subsections, we provide some examples of how to translate a `P` construct into RISC-V instructions. You may design your own instruction selection rules, as long as the generated code does what it should do. We recommend you read the [`RISC-V` tutorial](RISC-V-tutorial) before getting into the following subsections.
 
-- To pass information from declarations to uses.
-- To verify if a symbol has been declared before uses.
-- To help type checking when analyzing assignments, operations, and return statement.
+For all the examples below, we use a simple computation model called [**stack machine**](https://en.wikipedia.org/wiki/Stack_machine).
 
-**Components**
+ - When traversing to a `variable reference` node, push the **value** of the variable on the stack if it appears on the `RHS` of the `assignment` node, or push the **address** of the variable to the stack if it's on the `LHS` of the `assignment` node.
 
-A symbol table is simply a table that contains entries for each name of program, functions, or variables. Each entry consists of the following components:
+ - When traversing to a `computation` node, (1) pop the values on the stack to some registers, and (2) then compute the result with one or more instructions, and (3) finally push the result back to the stack.
 
-| Field | Description |
-| ----- | ----------- |
-| Name | The name of the symbol. Each symbol have the length between 1 to 32. The extra part of an identifier will be discarded. |
-| Kind | The name type of the symbol. There are **six** kinds of symbols: program, function, parameter, variable, loop\_var, and constant. |
-| Level | The scope level of the symbol. 0 represents the global scope. Local scope levels start from 1, and the scope level is incremented at the start of a scope and decremented at the end of the scope.  |
-| Type | The type of the symbol. Each symbol is of types integer, real, boolean, string, or the signature of an array. (Note that this field can be used for the return type of a function.) |
-| Attribute | Other attributes of the symbol, the value of a constant, or list of the types of the formal parameters of a function. |
+ - When traversing to an `assignment` node, (1) pop the value and the address on the stack to some registers, and (2) then store the value to that address.
 
-#### Implementation
+ - For more precise steps, see [simple compilers](https://en.wikipedia.org/wiki/Stack_machine#Simple_compilers).
 
-A symbol table can be implemented in one of the following ways to represent entries in it:
+---
 
-- Linear list
-- Binary search tree
-- Hash table
+The generated `RISC-V` code will have the following structure:
 
-#### Operations
+```assembly
+.section    .bss
+    # uninitialized global variable(s)
 
-A symbol table should provide the following operations:
+.section    .rodata
+    # global constant(s)
 
-- insert
-	- used to add a new symbol declaration in the symbol table
-- lookup
-	- used to search a identifier in the symbol table for performing semantic analyses
+.section    .text
+    # function
 
-#### Scope Management
+.section    .text
+    # main function
+```
 
-In general, we won't just have one giant symbol table for each program. There is a concept of scope in the `P` language. Scope refers to the visibility of symbols. That is, different parts of the program located in different scopes may not see or use symbols in other scopes.
+<div align="right">
+    <b><a href="#table-of-contents">↥ back to menu</a></b>
+</div>
 
-A scope corresponds to a symbol table. `ProgramNode`, `FunctionNode`, `ForNode` and `CompoundStatementNode` are nodes that form a scope. Therefore, your parser should create a new symbol table when encountering one of these nodes and destroy it when leaving the node.
+### Initialization
 
-Following are the special rules that you should be careful of:
+ - An empty `P` program
 
-- A `FunctionNode` should share the same symbol table with its body (`CompoundStatementNode`). More specifically, parameters of a `FunctionNode` should be declared in the same symbol table with those declared in the `CompoundStatementNode`.
-- A `ForNode` contains a symbol table for the loop variable. That is, there is a scope (symbol table) in a `ForNode` with **only one symbol of a loop variable**.
+    ```p
+    // test1.p
+    test1;
+    begin
+    end
+    end
+    ```
 
-#### Scope Rules
+    will be translated into the following `RISC-V` instructions.
 
-After entering a node that forms a scope, we may encounter some declarations. Then we have to extract information from the declaration and store it in the current symbol table.
+    ```assembly
+        .file "test1.p"
+        .option nopic
+    .section    .text
+        .align 2
+        .globl main          # emit symbol 'main' to the global symbol table
+        .type main, @function
+    main:
+        # in the function prologue
+        addi sp, sp, -128    # move stack pointer to lower address to allocate a new stack
+        sw ra, 124(sp)       # save return address of the caller function in the current stack
+        sw s0, 120(sp)       # save frame pointer of the last stack in the current stack
+        addi s0, sp, 128     # move frame pointer to the bottom of the current stack
 
-When constructing an entry in a symbol table, there are some rules to conform:
+        # in the function epilogue
+        lw ra, 124(sp)       # load return address saved in the current stack
+        lw s0, 120(sp)       # move frame pointer back to the bottom of the last stack
+        addi sp, sp, 128     # move stack pointer back to the top of the last stack
+        jr ra                # jump back to the caller function
+        .size main, .-main
+    ```
 
-- Scope rules are similar to C.
-- Name must be unique within a given scope. The identifier designates the entity declared closest to it; that is, the identifier declared in the outer scope is hidden by the one declared in the inner scope.
-	- Unlike the normal variable, the symbol of a loop variable **CANNOT** be redeclared, whether it's in the same scope or the inner scope.
-	- If there are multiple declarations with the same identifier in the same scope, only the first declaration will be placed in the symbol table.
-- Declarations within a compound statement, a function, or a for statement are local to the statements in the same block or the inner block, and no longer exist after exiting the block in which it's declared.
+A function `main` must be generated for the compound statement (program body) in the program node.
 
-If there is a violation, your parser should report a semantic error. (we'll discuss it later.)
+You should allocate a local memory in the function prologue and clear the local memory in the function epilogue. In this assignment, allocate **128 bytes** of local memories is sufficient for the parameters and the local variables. However, in modern compilers, the size of the local memory depends on the demand of the function.
 
-#### Output Format
+<div align="right">
+    <b><a href="#table-of-contents">↥ back to menu</a></b>
+</div>
+
+### Declarations of Variables and Constants
+
+#### Global Variables
+
+ - Declaring a global variable `a`
+
+    ```p
+    var a: integer;
+    ```
+
+    will be translated into the following `RISC-V` instructions.
+
+    ```assembly
+    .comm a, 4, 4    # emit object 'a' to .bss section with size = 4, align = 4
+    ```
+
+ - Assigning a value to a global variable `a`
+
+    ```p
+    a := 6;
+    ```
+
+    will be translated into the following `RISC-V` instructions.
+
+    ```
+    la t0, a         # load the address of variable 'a'
+    addi sp, sp, -4
+    sw t0, 0(sp)     # push the address to the stack
+    li t0, 6         # load value '6' to register 't0'
+    addi sp, sp, -4
+    sw t0, 0(sp)     # push the value to the stack
+    lw t0, 0(sp)     # pop the value from the stack
+    addi sp, sp, 4
+    lw t1, 0(sp)     # pop the address from the stack
+    addi sp, sp, 4
+    sw t0, 0(t1)     # save the value to the address of 'a'
+    ```
+
+#### Local Variables
+
+ - Declaring a local variable
+   + Each local integer variable occupies four bytes of the allocated local memory. For example, `fp-8` to `fp-12` for variable `b` and `fp-12` to `fp-16` for variable `c`. You could save this information in the `symbol table` the first time you construct it.
+
+ - Assigning a value to a local variable `b` stored in `fp-8` to `fp-12` and a value to a local variable `c` stored in `fp-12` to `fp-16`.
+
+    ```p
+    var b, c: integer;
+    b := 5;
+    c := 6;
+    ```
+
+    will be translated into the following `RISC-V` instructions.
+
+    ```assembly
+    addi t0, s0, -12
+    addi sp, sp, -4
+    sw t0, 0(sp)     # push the address to the stack
+    li t0, 5
+    addi sp, sp, -4
+    sw t0, 0(sp)     # push the value to the stack
+    lw t0, 0(sp)     # pop the value from the stack
+    addi sp, sp, 4
+    lw t1, 0(sp)     # pop the address from the stack
+    addi sp, sp, 4
+    sw t0, 0(t1)     # b = 5
+    addi t0, s0, -16
+    addi sp, sp, -4
+    sw t0, 0(sp)     # push the address to the stack
+    li t0, 6
+    addi sp, sp, -4
+    sw t0, 0(sp)     # push the value to the stack
+    lw t0, 0(sp)     # pop the value from the stack
+    addi sp, sp, 4
+    lw t1, 0(sp)     # pop the address from the stack
+    addi sp, sp, 4
+    sw t0, 0(t1)     # c = 6
+    ```
+
+#### Global Constants
+
+ - Declaring a global constant `d`
+
+    ```p
+    var d: 5;
+    ```
+
+    will be translated into the following `RISC-V` instructions.
+
+    ```assembly
+    .section    .rodata       # emit rodata section
+        .align 2
+        .globl d              # emit symbol 'd' to the global symbol table
+        .type d, @object
+    d:
+        .word 5
+    ```
+
+#### Local Constants
+
+The same as local variables.
+
+<div align="right">
+    <b><a href="#table-of-contents">↥ back to menu</a></b>
+</div>
+
+### Expression
+
+ - Adding up local variable `b` and local variable `c`, then multiplying with global constant `d`, and finally assigning to global variable `a`
+
+    ```p
+    a := (b + c) * d;
+    ```
+
+    will be translated into the following `RISC-V` instructions.
+
+    ```assembly
+    addi sp, sp, -4
+    la t0, a          # load the address of 'a'
+    sw t0, 0(sp)      # push the address to the stack
+    lw t0, -12(s0)    # load the value of 'b'
+    addi sp, sp, -4
+    sw t0, 0(sp)      # push the value to the stack
+    lw t0, -16(s0)    # load the value of 'c'
+    addi sp, sp, -4
+    sw t0, 0(sp)      # push the value to the stack
+    lw t0, 0(sp)      # pop the value from the stack
+    addi sp, sp, 4
+    lw t1, 0(sp)      # pop the value from the stack
+    addi sp, sp, 4
+    add t0, t1, t0    # b + c, always save the value in a certain register you choose
+    addi sp, sp, -4
+    sw t0, 0(sp)      # push the value to the stack
+    la t0, d          # load the address of 'd'
+    lw t1, 0(t0)      # load the 32-bit value of 'd'
+    mv t0, t1
+    addi sp, sp, -4
+    sw t0, 0(sp)      # push the value to the stack
+    lw t0, 0(sp)      # pop the value from the stack
+    addi sp, sp, 4
+    lw t1, 0(sp)      # pop the value from the stack
+    addi sp, sp, 4
+    mul t0, t1, t0    # (b + c) * d, always save the value in a certain register you choose
+    addi sp, sp, -4
+    sw t0, 0(sp)      # push the value to the stack
+    lw t0, 0(sp)      # pop the value from the stack
+    addi sp, sp, 4
+    la t1, 0(sp)      # pop the address from the stack
+    addi sp, sp, 4
+    sw t0, 0(t1)      # save the value to 'a'
+    ```
+
+> The values on the registers may be polluted **after calling a function**, so you should take care of registers if you don't push the values on the registers to the stack every time and there's a function invocation in an expression. The simplest way is saving the registers on the stack in the function prologue and restoring them in the function epilogue.
+
+<div align="right">
+    <b><a href="#table-of-contents">↥ back to menu</a></b>
+</div>
+
+### Function Declaration and Invocation
+
+ - Declaring a function `sum`
+
+    ```p
+    sum(a,b: integer): integer
+    begin
+        var c: integer;
+        c := a + b;
+        return c;
+    end
+    end
+    ```
+
+    will be translated into the following `RISC-V` instructions.
+
+    ```assembly
+    .section    .text
+        .align 2
+        .globl sum
+        .type sum, @function
+    sum:
+        addi sp, sp, -128
+        sw ra, 124(sp)
+        sw s0, 120(sp)
+        addi s0, sp, 128
+        sw a0, -12(s0)    # save parameter 'a' in the local stack
+        sw a1, -16(s0)    # save parameter 'b' in the local stack
+        addi t0, s0, -20  # load the address of 'c'
+        addi sp, sp, -4
+        sw t0, 0(sp)      # push the address to the stack
+        lw t0, -12(s0)    # load the value of 'a'
+        addi sp, sp, -4
+        sw t0, 0(sp)      # push the value to the stack
+        lw t0, -16(s0)    # load the value of 'b'
+        addi sp, sp, -4
+        sw t0, 0(sp)      # push the value to the stack
+        lw t0, 0(sp)      # pop the value from the stack
+        addi sp, sp, 4
+        lw t1, 0(sp)      # pop the value from the stack
+        addi sp, sp, 4
+        add t0, t1, t0    # a + b, always save the value in a certain register you choose
+        addi sp, sp, -4
+        sw t0, 0(sp)      # push the value to the stack
+        lw t0, 0(sp)      # pop the value from the stack
+        addi sp, sp, 4
+        lw t1, 0(sp)      # pop the address from the stack
+        addi sp, sp, 4
+        sw t0, 0(t1)      # save the value to 'c'
+        lw t0, -20(s0)
+        addi sp, sp, -4
+        sw t0, 0(sp)      # push the value to the stack
+        lw t0, 0(sp)      # pop the value from the stack
+        addi sp, sp, 4
+        mv a0, t0         # load the value of 'c' to the return value register 'a0'
+        lw ra, 124(sp)
+        lw s0, 120(sp)
+        addi sp, sp, 128
+        jr ra
+        .size sum, .-sum
+    ```
+
+ - Call function `sum` with local variable `b` and global constant `d`, then assign the result to global variable `a`
+
+    ```p
+    a := sum(b, d);
+    ```
+
+    will be translated into the following `RISC-V` instructions.
+
+    ```assembly
+    la t0, a         # load the address of 'a'
+    addi sp, sp, -4
+    sw t0, 0(sp)     # push the value to the stack
+    lw t0, -12(s0)   # load the value of 'b'
+    addi sp, sp, -4
+    sw t0, 0(sp)     # push the value to the stack
+    la t0, d         # load the address of 'd'
+    lw t1, 0(t0)     # load the 32-bit value of 'd'
+    mv t0, t1
+    addi sp, sp, -4
+    sw t0, 0(sp)     # push the value to the stack
+    lw a1, 0(sp)     # pop the value from the stack to the second argument register 'a1'
+    addi sp, sp, 4
+    lw a0, 0(sp)     # pop the value from the stack to the first argument register 'a0'
+    addi sp, sp, 4
+    jal ra, sum      # call function 'sum'
+    mv t0, a0        # always move the return value to a certain register you choose
+    addi sp, sp, -4
+    sw t0, 0(sp)     # push the value to the stack
+    lw t0, 0(sp)     # pop the value from the stack
+    addi sp, sp, 4
+    lw t1, 0(sp)     # pop the address from the stack
+    addi sp, sp, 4
+    sw t0, 0(t1)     # save the value to 'a'
+    ```
 
 > [!note]
-> Your parser should dump the symbol table to **`stdout`**.
+> The function argument number in the test case may be larger than **eight**, and there are only `a0`-`a7` registers. You should try to place the remain arguments in other places.
 
-Format of each component:
+<div align="right">
+    <b><a href="#table-of-contents">↥ back to menu</a></b>
+</div>
 
-- Name
-	- just characters
-- Kind
-	- 6 kinds of symbols with respective strings: `program`, `function`, `parameter`, `variable`, `loop_var`, and `constant`
-- Level
-	- 0: `"0(global)"`
-	- other level: `n(local)`
-- Type
-	- just type string, same rule as hw3
-- Attribute
-	- constant
-		- just string of constant
-	- types of formal parameters
-		- type strings separated by `", "` (e.g., `real, real [2]`)
+### Simple Statement
 
-Format of whole table:
-
-```c
-void dumpDemarcation(const char chr) {
-  for (size_t i = 0; i < 110; ++i) {
-    printf("%c", chr);
-  }
-  puts("");
-}
-
-void dumpSymbol(void) {
-  dumpDemarcation('=');
-  printf("%-33s%-11s%-11s%-17s%-11s\n", "Name", "Kind", "Level", "Type",
-                                        "Attribute");
-  dumpDemarcation('-')
-  {
-    printf("%-33s", "func");
-    printf("%-11s", "function");
-    printf("%d%-10s", 0, "(global)");
-    printf("%-17s", "boolean");
-    printf("%-11s", "integer, real [2][3]");
-    puts("");
-  }
-  dumpDemarcation('-')
-}
-```
-
-**Example:**
-
-Assume we have the following function in a `P` program:
+It's a little complicated to call an `IO` system call, so we provide you **print** functions and **read** functions in `io.c`. You can compile and link your generated code with the functions by:
 
 ```
-foo()
+riscv32-unknown-elf-gcc [generated RISC-V assembly file] io.c -o [output ELF file]
+```
+
+ - Printing a global variable `a`
+
+    ```p
+    print a;
+    ```
+
+    will be translated into the following `RISC-V` instructions.
+
+    ```assembly
+    la t0, a
+    lw t1, 0(t0)     # load the value of 'a'
+    mv t0, t1
+    addi sp, sp, -4
+    sw t0, 0(sp)     # push the value to the stack
+    lw a0, 0(sp)     # pop the value from the stack to the first argument register 'a0'
+    addi sp, sp, 4
+    jal ra, printInt # call function 'printInt'
+    ```
+
+ - Read a value and save to a global variable `a`
+
+    ```p
+    read a;
+    ```
+
+    will be translated into the following `RISC-V` instructions.
+
+    ```assembly
+    la t0, a         # load the address of 'a'
+    addi sp, sp, -4
+    sw t0, 0(sp)     # push the address to the stack
+    jal ra, readInt  # call function 'readInt'
+    lw t0, 0(sp)     # pop the address from the stack
+    addi sp, sp, 4
+    sw a0, 0(t0)     # save the return value to 'a'
+    ```
+
+<div align="right">
+    <b><a href="#table-of-contents">↥ back to menu</a></b>
+</div>
+
+### Conditional Statement
+
+ - Branching according to `a`'s value
+
+    ```p
+    if ( a <= 40 ) then
+    begin
+        print a;
+    end
+    else
+    begin
+        print b;
+    end
+    end if
+    ```
+
+    will be translated into the following `RISC-V` instructions.
+
+    ```assembly
+        la t0, a
+        lw t1, 0(t0)          # load the value of 'a'
+        mv t0, t1
+        addi sp, sp, -4
+        sw t0, 0(sp)          # push the value to the stack
+        li t0, 40
+        addi sp, sp, -4
+        sw t0, 0(sp)          # push the value to the stack
+        lw t0, 0(sp)          # pop the value from the stack
+        addi sp, sp, 4
+        lw t1, 0(sp)          # pop the value from the stack
+        addi sp, sp, 4
+        bgt t1, t0, L2        # if a > 40, jump to L2
+    L1:
+        la t0, a
+        lw t1, 0(t0)          # load the value of 'a'
+        mv t0, t1
+        addi sp, sp, -4
+        sw t0, 0(sp)          # push the value to the stack
+        lw a0, 0(sp)          # pop the value from the stack to the first argument register 'a0'
+        addi sp, sp, 4
+        jal ra, printInt      # call function 'printInt'
+        j L3                  # jump to L3
+    L2:
+        lw t0, -12(s0)        # load the value of 'b'
+        addi sp, sp, -4
+        sw t0, 0(sp)          # push the value to the stack
+        lw a0, 0(sp)          # pop the value from the stack to the first argument register 'a0'
+        addi sp, sp, 4
+        jal ra, printInt      # call function 'printInt'
+    L3:
+    ```
+
+<div align="right">
+    <b><a href="#table-of-contents">↥ back to menu</a></b>
+</div>
+
+### For Statement and While Statement
+
+ - Looping until b >= 8
+
+    ```p
+    while b < 8 do
+    begin
+        print b;
+        b := b + 1;
+    end
+    end do
+    ```
+
+    will be translated into the following `RISC-V` instructions.
+
+    ```assembly
+    L3:
+        lw t0, -12(s0)        # load the value of 'b'
+        addi sp, sp, -4
+        sw t0, 0(sp)          # push the value to the stack
+        li t0, 8
+        addi sp, sp, -4
+        sw t0, 0(sp)          # push the value to the stack
+        lw t0, 0(sp)          # pop the value from the stack
+        addi sp, sp, 4
+        lw t1, 0(sp)          # pop the value from the stack
+        addi sp, sp, 4
+        bge t1, t0, L5        # if b >= 8, exit the loop
+    L4:
+        lw t0, -12(s0)        # load the value of 'b'
+        addi sp, sp, -4
+        sw t0, 0(sp)          # push the value to the stack
+        lw a0, 0(sp)          # pop the value from the stack to the first argument register 'a0'
+        addi sp, sp, 4
+        jal ra, printInt      # call function 'printInt'
+        addi t0, s0, -12      # load the address of 'b'
+        addi sp, sp, -4
+        sw t0, 0(sp)          # push the address to the stack
+        lw t0, -12(s0)        # load the value of 'b'
+        addi sp, sp, -4
+        sw t0, 0(sp)          # push the value to the stack
+        li t0, 1
+        addi sp, sp, -4
+        sw t0, 0(sp)          # push the value to the stack
+        lw t0, 0(sp)          # pop the value from the stack
+        addi sp, sp, 4
+        lw t1, 0(sp)          # pop the value from the stack
+        addi sp, sp, 4
+        add t0, t1, t0        # b + 1, always save the value in a certain register you choose
+        addi sp, sp, -4
+        sw t0, 0(sp)          # push the value to the stack
+        lw t0, 0(sp)          # pop the value from the stack
+        addi sp, sp, 4
+        lw t1, 0(sp)          # pop the address from the stack
+        addi sp, sp, 4
+        sw t0, 0(t1)          # save the value to 'b'
+        j L3                  # jump back to loop condition
+    L5:
+    ```
+
+ - Looping with loop variable `i`
+
+    ```p
+    for i := 10 to 13 do
+    begin
+        print i;
+    end
+    end do
+    ```
+
+    will be translated into the following `RISC-V` instructions.
+
+    ```assembly
+        addi t0, s0, -20
+        addi sp, sp, -4
+        sw t0, 0(sp)          # push the address of the loop variable to the stack
+        li t0, 10
+        addi sp, sp, -4
+        sw t0, 0(sp)          # push the value to the stack
+        lw t0, 0(sp)          # pop the value from the stack
+        addi sp, sp, 4
+        lw t1, 0(sp)          # pop the address from the stack
+        addi sp, sp, 4
+        sw t0, 0(t1)          # save the loop variable in the local stack
+    L6:
+        lw t0, -20(s0)        # load the value of 'i'
+        addi sp, sp, -4
+        sw t0, 0(sp)          # push the value to the stack
+        li t0, 13
+        addi sp, sp, -4
+        sw t0, 0(sp)          # push the value to the stack
+        lw t0, 0(sp)          # pop the value from the stack
+        addi sp, sp, 4
+        lw t1, 0(sp)          # pop the value from the stack
+        addi sp, sp, 4
+        bge t1, t0, L8        # if i >= 13, exit the loop
+    L7:
+        lw t0, -20(s0)        # load the value of 'i'
+        addi sp, sp, -4
+        sw t0, 0(sp)          # push the value to the stack
+        lw a0, 0(sp)          # pop the value from the stack to the first argument register 'a0'
+        addi sp, sp, 4
+        jal ra, printInt      # call function 'printInt'
+        addi t0, s0, -20      # load the address of 'i'
+        addi sp, sp, -4
+        sw t0, 0(sp)          # push the address to the stack
+        lw t0, -20(s0)        # load the value of 'i'
+        addi sp, sp, -4
+        sw t0, 0(sp)          # push the value to the stack
+        li t0, 1
+        addi sp, sp, -4
+        sw t0, 0(sp)          # push the value to the stack
+        lw t0, 0(sp)          # pop the value from the stack
+        addi sp, sp, 4
+        lw t1, 0(sp)          # pop the value from the stack
+        addi sp, sp, 4
+        add t0, t1, t0        # i + 1, always save the value in a certain register you choose
+        addi sp, sp, -4
+        sw t0, 0(sp)          # push the value to the stack
+        lw t0, 0(sp)          # pop the value from the stack
+        addi sp, sp, 4
+        lw t1, 0(sp)          # pop the address from the stack
+        addi sp, sp, 4
+        sw t0, 0(t1)          # save the value to 'i'
+        j L6                  # jump back to loop condition
+    L8:
+    ```
+
+<div align="right">
+    <b><a href="#table-of-contents">↥ back to menu</a></b>
+</div>
+
+### Combining All Examples Above
+
+<details>
+<summary>Click to expand!</summary>
+
+```p
+// test1.p
+test1;
+
+var a: integer;
+var d: 5;
+
+sum(a,b: integer): integer
 begin
-    // constant
-    var int1, int2 : 10;
-    var str : "Gimme Gimme Gimme!!";
-    var bool : true;
-    var float : 2.56;
-    var scientific : 111.111E-3;
-    var octal : 0777;
+    var c: integer;
+    c := a + b;
+    return c;
+end
+end
+
+begin
+
+var b, c: integer;
+b := 5;
+c := 6;
+
+read a;
+print a;
+
+a := sum(b, d);
+print a;
+
+a := (b + c) * d;
+print a;
+
+if ( a <= 40 ) then
+begin
+    print a;
+end
+else
+begin
+    print b;
+end
+end if
+
+while b < 8 do
+begin
+    print b;
+    b := b + 1;
+end
+end do
+
+for i := 10 to 13 do
+begin
+    print i;
+end
+end do
+
 end
 end
 ```
 
-Then the symbol table of the scope formed by the `CompoundStatementNode` in this function `foo()`:
+will be translated into the following `RISC-V` instructions.
 
+```assembly
+    .file "test1.p"
+    .option nopic
+.comm a, 4, 4             # emit object 'a' to .bss section with size = 4, align = 4
+.section    .rodata       # emit rodata section
+    .align 2
+    .globl d              # emit symbol 'd' to the global symbol table
+    .type d, @object
+d:
+    .word 5
+.section    .text
+    .align 2
+    .globl sum
+    .type sum, @function
+sum:
+    addi sp, sp, -128
+    sw ra, 124(sp)
+    sw s0, 120(sp)
+    addi s0, sp, 128
+    sw a0, -12(s0)        # save parameter 'a' in the local stack
+    sw a1, -16(s0)        # save parameter 'b' in the local stack
+    addi t0, s0, -20      # load the address of 'c'
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the address to the stack
+    lw t0, -12(s0)        # load the value of 'a'
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    lw t0, -16(s0)        # load the value of 'b'
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    lw t0, 0(sp)          # pop the value from the stack
+    addi sp, sp, 4
+    lw t1, 0(sp)          # pop the value from the stack
+    addi sp, sp, 4
+    add t0, t1, t0        # a + b, always save the value in a certain register you choose
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    lw t0, 0(sp)          # pop the value from the stack
+    addi sp, sp, 4
+    lw t1, 0(sp)          # pop the address from the stack
+    addi sp, sp, 4
+    sw t0, 0(t1)          # save the value to 'c'
+    lw t0, -20(s0)
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    lw t0, 0(sp)          # pop the value from the stack
+    addi sp, sp, 4
+    mv a0, t0             # load the value of 'c' to the return value register 'a0'
+    lw ra, 124(sp)
+    lw s0, 120(sp)
+    addi sp, sp, 128
+    jr ra
+    .size sum, .-sum
+.section    .text
+    .align 2
+    .globl main           # emit symbol 'main' to the global symbol table
+    .type main, @function
+main:
+    # in the function prologue
+    addi sp, sp, -128     # move stack pointer to lower address to allocate a new stack
+    sw ra, 124(sp)        # save return address of the caller function in the current stack
+    sw s0, 120(sp)        # save frame pointer of the last stack in the current stack
+    addi s0, sp, 128      # move frame pointer to the bottom of the current stack
+    # b = 5
+    addi t0, s0, -12
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the address to the stack
+    li t0, 5
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    lw t0, 0(sp)          # pop the value from the stack
+    addi sp, sp, 4
+    lw t1, 0(sp)          # pop the address from the stack
+    addi sp, sp, 4
+    sw t0, 0(t1)          # b = 5
+    # c = 6
+    addi t0, s0, -16
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the address to the stack
+    li t0, 6
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    lw t0, 0(sp)          # pop the value from the stack
+    addi sp, sp, 4
+    lw t1, 0(sp)          # pop the address from the stack
+    addi sp, sp, 4
+    sw t0, 0(t1)          # c = 6
+    # read a
+    la t0, a              # load the address of 'a'
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the address to the stack
+    jal ra, readInt       # call function 'readInt'
+    lw t0, 0(sp)          # pop the address from the stack
+    addi sp, sp, 4
+    sw a0, 0(t0)          # save the return value to 'a'
+    # print a
+    la t0, a
+    lw t1, 0(t0)          # load the value of 'a'
+    mv t0, t1
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    lw a0, 0(sp)          # pop the value from the stack to the first argument register 'a0'
+    addi sp, sp, 4
+    jal ra, printInt      # call function 'printInt'
+    # a = sum(b, d)
+    la t0, a              # load the address of 'a'
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    lw t0, -12(s0)        # load the value of 'b'
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    la t0, d              # load the address of 'd'
+    lw t1, 0(t0)          # load the 32-bit value of 'd'
+    mv t0, t1
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    lw a1, 0(sp)          # pop the value from the stack to the second argument register 'a1'
+    addi sp, sp, 4
+    lw a0, 0(sp)          # pop the value from the stack to the first argument register 'a0'
+    addi sp, sp, 4
+    jal ra, sum           # call function 'sum'
+    mv t0, a0             # always move the return value to a certain register you choose
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    lw t0, 0(sp)          # pop the value from the stack
+    addi sp, sp, 4
+    lw t1, 0(sp)          # pop the address from the stack
+    addi sp, sp, 4
+    sw t0, 0(t1)          # save the value to 'a'
+    la t0, a
+    lw a0, 0(t0)
+    jal ra, printInt
+    # a = (b + c) * d
+    addi sp, sp, -4
+    la t0, a              # load the address of 'a'
+    sw t0, 0(sp)          # push the address to the stack
+    lw t0, -12(s0)        # load the value of 'b'
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    lw t0, -16(s0)        # load the value of 'c'
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    lw t0, 0(sp)          # pop the value from the stack
+    addi sp, sp, 4
+    lw t1, 0(sp)          # pop the value from the stack
+    addi sp, sp, 4
+    add t0, t1, t0        # b + c, always save the value in a certain register you choose
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    la t0, d              # load the address of 'd'
+    lw t1, 0(t0)          # load the 32-bit value of 'd'
+    mv t0, t1
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    lw t0, 0(sp)          # pop the value from the stack
+    addi sp, sp, 4
+    lw t1, 0(sp)          # pop the value from the stack
+    addi sp, sp, 4
+    mul t0, t1, t0        # (b + c) * d, always save the value in a certain register you choose
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    lw t0, 0(sp)          # pop the value from the stack
+    addi sp, sp, 4
+    lw t1, 0(sp)          # pop the address from the stack
+    addi sp, sp, 4
+    sw t0, 0(t1)          # save the value to 'a'
+    la t0, a
+    lw a0, 0(t0)
+    jal ra, printInt
+    # condition example
+    la t0, a
+    lw t1, 0(t0)          # load the value of 'a'
+    mv t0, t1
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    li t0, 40
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    lw t0, 0(sp)          # pop the value from the stack
+    addi sp, sp, 4
+    lw t1, 0(sp)          # pop the value from the stack
+    addi sp, sp, 4
+    bgt t1, t0, L2        # if a > 40, jump to L2
+L1:
+    la t0, a
+    lw t1, 0(t0)          # load the value of 'a'
+    mv t0, t1
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    lw a0, 0(sp)          # pop the value from the stack to the first argument register 'a0'
+    addi sp, sp, 4
+    jal ra, printInt      # call function 'printInt'
+    j L3                  # jump to L3
+L2:
+    lw t0, -12(s0)        # load the value of 'b'
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    lw a0, 0(sp)          # pop the value from the stack to the first argument register 'a0'
+    addi sp, sp, 4
+    jal ra, printInt      # call function 'printInt'
+L3:
+    # while loop example
+    lw t0, -12(s0)        # load the value of 'b'
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    li t0, 8
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    lw t0, 0(sp)          # pop the value from the stack
+    addi sp, sp, 4
+    lw t1, 0(sp)          # pop the value from the stack
+    addi sp, sp, 4
+    bge t1, t0, L5        # if b >= 8, exit the loop
+L4:
+    lw t0, -12(s0)        # load the value of 'b'
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    lw a0, 0(sp)          # pop the value from the stack to the first argument register 'a0'
+    addi sp, sp, 4
+    jal ra, printInt      # call function 'printInt'
+    addi t0, s0, -12      # load the address of 'b'
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the address to the stack
+    lw t0, -12(s0)        # load the value of 'b'
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    li t0, 1
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    lw t0, 0(sp)          # pop the value from the stack
+    addi sp, sp, 4
+    lw t1, 0(sp)          # pop the value from the stack
+    addi sp, sp, 4
+    add t0, t1, t0        # b + 1, always save the value in a certain register you choose
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    lw t0, 0(sp)          # pop the value from the stack
+    addi sp, sp, 4
+    lw t1, 0(sp)          # pop the address from the stack
+    addi sp, sp, 4
+    sw t0, 0(t1)          # save the value to 'b'
+    j L3                  # jump back to loop condition
+L5:
+    # for loop example
+    addi t0, s0, -20
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the address of the loop variable to the stack
+    li t0, 10
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    lw t0, 0(sp)          # pop the value from the stack
+    addi sp, sp, 4
+    lw t1, 0(sp)          # pop the address from the stack
+    addi sp, sp, 4
+    sw t0, 0(t1)          # save the loop variable in the local stack
+L6:
+    lw t0, -20(s0)        # load the value of 'i'
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    li t0, 13
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    lw t0, 0(sp)          # pop the value from the stack
+    addi sp, sp, 4
+    lw t1, 0(sp)          # pop the value from the stack
+    addi sp, sp, 4
+    bge t1, t0, L8        # if i >= 13, exit the loop
+L7:
+    lw t0, -20(s0)        # load the value of 'i'
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    lw a0, 0(sp)          # pop the value from the stack to the first argument register 'a0'
+    addi sp, sp, 4
+    jal ra, printInt      # call function 'printInt'
+    addi t0, s0, -20      # load the address of 'i'
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the address to the stack
+    lw t0, -20(s0)        # load the value of 'i'
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    li t0, 1
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    lw t0, 0(sp)          # pop the value from the stack
+    addi sp, sp, 4
+    lw t1, 0(sp)          # pop the value from the stack
+    addi sp, sp, 4
+    add t0, t1, t0        # i + 1, always save the value in a certain register you choose
+    addi sp, sp, -4
+    sw t0, 0(sp)          # push the value to the stack
+    lw t0, 0(sp)          # pop the value from the stack
+    addi sp, sp, 4
+    lw t1, 0(sp)          # pop the address from the stack
+    addi sp, sp, 4
+    sw t0, 0(t1)          # save the value to 'i'
+    j L6                  # jump back to loop condition
+L8:
+    # in the function epilogue
+    lw ra, 124(sp)        # load return address saved in the current stack
+    lw s0, 120(sp)        # move frame pointer back to the bottom of the last stack
+    addi sp, sp, 128      # move stack pointer back to the top of the last stack
+    jr ra                 # jump back to the caller function
+    .size main, .-main
 ```
-==============================================================================================================
-Name                             Kind       Level      Type             Attribute
---------------------------------------------------------------------------------------------------------------
-int1                             constant   1(local)   integer          10
-int2                             constant   1(local)   integer          10
-str                              constant   1(local)   string           Gimme Gimme Gimme!!
-bool                             constant   1(local)   boolean          true
-float                            constant   1(local)   real             2.560000
-scientific                       constant   1(local)   real             0.111111
-octal                            constant   1(local)   integer          511
---------------------------------------------------------------------------------------------------------------
-```
-
-#### Pseudocomments
-
-In the first assignment, we have defined:
-
-- `S`
-	- `&S+` turns on source program listing, and `&S-` turns it off.
-- `T`
-	- `&T+` turns on token (which will be returned to the parser) listing, and `&T-` turns it off.
-
-In this assignment, one more option is added:
-
-- `D`
-	- Dump the contents of the symbol table associated with a block when exiting from that block.
-	- `&D+` turns on symbol table dumping, and `&D-` turns it off.
-	- By default, this option is on.
-	- In test cases, this option won't be turned on/off in the middle of the program, it will only be set before the `ProgramName`.
-
-### 0x01. Semantic Analysis
 
-Now we have a basic grasp of what the symbol table is. Let's see how to use it in semantic analysis.
+</details>
 
-Before that, we need to talk about when to perform semantic analyses. Basically, semantic analyses can be separated into two parts by the performed order. One is performed in _pre-order_, while another one is in _post-order_. There is only one semantic analysis that should be performed in pre-order, that is symbol redeclaration. Except for symbol redeclaration, all other semantic analyses are performed in post-order.
+### Bonus
 
-In this assignment, you have to implement a semantic analyzer to perform semantic analyses on a given program by traversing the AST of it. When meeting a node, your analyzer should behave like this:
+You need to generate `RISC-V` instructions for `boolean type`, `array type`, `string type`, and `real type` for the extra points. The code generation for additional types will be tested **with** declarations, statements and expressions. The following are some hints for the bonus.
 
-```c
-void visitXXXNode(/* omitted for simplicity */) {
-    /*
-     * Step 1. Push a new symbol table if this node forms a scope.
-     * Step 2. Insert the symbol into current symbol table if this node is related to
-     *    declaration.
-     * Step 3. Traverse child nodes of this node.
-     * Step 4. Perform semantic analyses of this node.
-     * Step 5. Pop the symbol table pushed at the 1st step.
-     */
-}
-```
+#### Boolean Type
 
-> [!note]
-> Once your parser has found a semantic error in a child node of some node, the parser has no need to check semantic errors related to the child node since the parser cannot use the wrong information for the rest examinations.
+Just treat the `true` and `false` as `1` and `0`.
 
+#### Array Type
 
-Let's look at a simple example:
+For simplicity, you can pass the array variables by value.
 
-```
-example;
+#### String Type
 
-begin // 1.
-    var a: 55146; // 2.
-    var a: integer; // 3.
-    var b: "SSLAB"; // 4.
+There is no string concatenation in test cases, so you don't need to allocate dynamic memory for a string variable.
 
-    a := 26980; // 5.
-    b := 26980 + "team"; // 6.
-end
-end
-```
+ - Defining a local string variable 'st' will be translated into the following `RISC-V` instructions.
 
-In this example, I'll skip the `ProgramNode` and directly demonstrate how should your analyzer do when meeting a `CompoundStatementNode`.
+    ```
+        .section	.rodata
+        .align	2
+    st:
+        .string	"hello"
+    ```
 
-1. A `CompoundStatementNode` forms a scope. The analyzer should push a new symbol table as the current symbol table (Step 1). Then, it skips Step 2 since this node is not related to the declaration.
+ - Referencing a local string variable 'st' will be translated into the following `RISC-V` instructions.
 
-2. Next, the analyzer traverses the child nodes of this node, starting from the variable declaration `var a: 55146;`. When meeting the node of the variable declaration, it also performs the tasks described in `visitXXXNode()`. In Step 2, it inserts the symbol `a` into the current symbol table as a constant variable. (Omit description of other steps for simplicity.)
+    ```
+    lui t0, %hi(st)
+    addi a0, t0, %lo(st)
+    ```
 
-3. After traversing the variable declaration `var a: 55146;`, the analyzer traverse the next variable declaration `var a: integer;`. When it tries to insert the symbol `a` into the current symbol table, it finds that it's a symbol redeclaration! Therefore, it reports the error to the `stderr` and moves on to the next step. <br>
-**This is why the symbol redeclared is classified into pre-order, the semantic error of it is found and reported before visiting child nodes (Step 3).** (Omit description of the rest steps for simplicity.)
+#### Real Type
 
-4. Omit the description of traversing the variable declaration `var b: "SSLAB";` since it's similar to the previous two.
+You should use floating-point registers and floating-point instructions for real type code generation. Check Single-Precision Instructions in [RISC-V ISA Specification](https://riscv.org/specifications/isa-spec-pdf/).
 
-5. The analyzer meets the assignment node `a := 26980;`. Again, it performs the tasks described in `visitXXXNode()`:
-	1. Skip since assignment node doesn't form a scope.
-	2. Skip since assignment node doesn't do declaration.
-	3. Traverse child nodes (variable reference and expression)
-		1. Traverse variable reference:
-			1. Omit steps 1, 2, 3 for simplicity.
-			2. In step 4, the semantic analyses of a `VariableReferenceNode` basically check whether this variable is in visible symbol tables. (More checks are described in [Section "0x02. Semantic Definition"](#0x02-semantic-definition)). It will do a lookup and find that symbol `a` is a constant variable declared in `2.`. Everything is fine, move on!
-		2. Traverse expression:
-			1. Omit steps 1, 2, 3 for simplicity.
-			2. In step 4, since there are no semantic analyses related to a `ConstantValueNode`, just move on.
-	4. Perform semantic analyses of an `AssignmentNode`, which basically check whether the variable reference is a constant or not and whether the variable reference and the expression are the same types. <br>
-	The analyzer will find that the variable reference is a reference to a constant variable, and we cannot assign a value to a constant variable. As a result, it'll report the semantic error and skip the rest checks of the `AssignmentNode`.
-6. Let's see a more complicated example. Also, the analyzer performs the same tasks on the assignment node `b := 26980 + "team";`:
-	1. Omit steps 1, 2 for simplicity.
-	2. Traverse child nodes (variable reference and expression)
-		1. Traverse variable reference:
-			1. Here is basically the same as the process described in 5-iii-a.
-		2. Traverse expression:
-			1. Omit steps 1, 2 for simplicity.
-			2. Traverse child nodes (constant value and constant value)
-				1. Nothing special. Omitted.
-			3. In step 4, the semantic analyses of a `BinaryOperatorNode` basically check whether the operands are the same types. <br>
-			The analyzer will find that the left operand is an integer, while the right operand is a string. We cannot add an integer with a string, so it will report the semantic error and skip the rest checks of the `BinaryOperatorNode`.
-	3. Perform semantic analyses of an `AssignmentNode`.
-		- Note that the spec has mentioned that we don't have to do further checks if the current node's child nodes have semantic errors. Be careful! The spec says that we don't have to do further checks **that are related to the child node which has a semantic error rather than all checks in the current node.** <br>
-		Therefore, the analyzer will still find that the variable reference is a reference to a constant variable, which is prohibited and report the semantic error! After all, the variable reference is unrelated to the expression. We can still check the semantic definitions of the variable reference in the `AssignmentNode`.
+ - Defining a local real type variable 'rv' will be translated into the following `RISC-V` instructions.
 
-More details about semantic definitions of each kind of node are listed in the next section.
+    ```
+        .section	.rodata
+        .align	2
+    rv:
+        .float	1.1
+            .
+            .
+            .
+    main:
+        lui t0, %hi(rv)
+        flw ft0, %lo(rv)(t0)
+        fsw ft0, -24(s0)
+    ```
 
-### 0x02. Semantic Definition
+ - Adding two real type variables will be translated into the following `RISC-V` instructions.
 
-This section describes the semantic definitions of each kind of node. Each kind of node has several rules to conform. Each rule is check by the order presented.
+    ```
+    flw	ft0, -24(s0)
+    flw	ft1, -24(s0)
+    fadd.s  ft0, ft1, ft0
+    fsw	ft0, -24(s0)
+    ```
 
-When your parser encounters a semantic error, the parser should report an error with relevant error messages and format, which are described in [error-message.md](./error-message.md) and skip the rest semantic checks of the node.
-
-> [!note]
-> Your parser should report the error to **`stderr`**.
-
-#### Symbol Table
-
-The symbol redeclaration error has two patterns:
-
-1. Normal symbol redeclaration: redeclare a symbol in the same scope.
-2. Loop variable redeclaration: loop variable cannot be redeclared in the same or any inner scope
-
-Scope rules are described in ["Scope Rule"](#scope-rules).
-
-#### Variable Declaration
-
-In an array declaration, each dimension's size has to be greater than 0.
-
-#### Variable Reference
-
-1. The identifier has to be in symbol tables.
-2. The kind of symbol has to be a parameter, variable, loop_var, or constant.
-
-(Skip the rest of semantic checks if there are any errors in the node of the declaration of the referred symbol)
-
-3. Each index of an array reference must be of the integer type.
-	- Once an incorrect (not an integer type) or unknown (an error has occurred in the child node) index was found, further checking regarding current array reference is unnecessary.
-	- Bound checking is not performed at compile time as in C language.
-4. An over array subscript is forbidden, that is, the number of indices of an array reference cannot be greater than the one of dimensions in the declaration.
-
-#### Binary/Unary operator
-
-Arithmetic operator (`+`, `-`, `*`, or `/`)
-
-(Skip the rest of semantic checks if there are any errors in the nodes of operands)
-
-1. Operands must be an integer or real type.
-	- The types of operands can be different after appropriate type coercion.
-	- The operation produces an integer or a real value.
-
----
-
-Neg operator (`-`)
-
-(Skip the rest of semantic checks if there are any errors in the node of operand)
-
-1. The operand must be an integer or real type.
-	- The operation produces an integer or a real value.
-
----
-
-Mod operator (`mod`)
-
-(Skip the rest of semantic checks if there are any errors in the nodes of operands)
-
-1. Operands must be an integer type.
-	- The operation produces an integer value.
-
----
-
-Boolean operator (`and`, `or`, or `not`)
-
-(Skip the rest of semantic checks if there are any errors in the nodes of operands)
-
-1. Operands must be boolean type.
-	- The operation produces a boolean value.
-
----
-
-Relational operator (`<`, `<=`, `=`, `>=`, `>`, or `<>`)
-
-(Skip the rest of semantic checks if there are any errors in the nodes of operands)
-
-1. Operands must be an integer or real type.
-	- The types of operands can be different after appropriate type coercion.
-	- The operation produces a boolean value.
-
----
-
-String concatenation (`+`)
-
-(Skip the rest of semantic checks if there are any errors in the nodes of operands)
-
-1. Operands must be a string type.
-	- The operation produces a string value.
-
-#### Type Coercion and Comparison
-
-1. Integer type can be implicitly converted into the real type in several situations: assignment, argument passing, arithmetic operation, relational operation, or return statement.
-2. The result of an arithmetic operation will be real type if one of the operands is real type. For example, `1.2 + 1` produces a real value.
-3. Two arrays are considered to be the same type if they have the same number of elements and the same type of the element.
-	- More specifically, the following attributes have to be the same:
-		- type of element
-		- number of dimensions
-		- size of each dimension
-	- Type coercion is not permitted.
-
-#### Function Invocation
-
-Terms in use:
-
-- Argument (actual parameter, the expression passed in)
-- Parameter (formal parameter, the variable declared in the function prototype)
-
----
-
-1. The identifier has to be in symbol tables.
-2. The kind of symbol has to be function.
-3. The number of arguments must be the same as one of the parameters.
-4. Traverse arguments:
-	<br>(Skip the rest of semantic checks if there are any errors in the node of the expression (argument))
-	1. The type of the result of the expression (argument) must be the same type of the corresponding parameter after appropriate type coercion.
-
-#### Print and Read Statement
-
-Print statement
-
-(Skip the rest of semantic checks if there are any errors in the node of the expression (target))
-
-1. The type of the expression (target) must be scalar type.
-
----
-
-Read statement
-
-(Skip the rest of semantic checks if there are any errors in the node of the variable reference)
-
-1. The type of the variable reference must be scalar type.
-2. The kind of symbol of the variable reference cannot be constant or loop_var.
-
-#### Assignment
-
-(Skip the rest of semantic checks if there are any errors in the node of the variable reference (lvalue))
-
-1. The type of the result of the variable reference cannot be an array type.
-2. The variable reference cannot be a reference to a constant variable.
-3. The variable reference cannot be a reference to a loop variable when the context is within a loop body.
-
-(Skip the rest of semantic checks if there are any errors in the node of the expression)
-
-5. The type of the result of the expression cannot be an array type.
-6. The type of the variable reference (lvalue) must be the same as the one of the expression after appropriate type coercion.
-
-#### If and While
-
-(Skip the rest of semantic checks if there are any errors in the node of the expression (condition))
-
-1. The type of the result of the expression (condition) must be boolean type.
-
-#### For
-
-The initial value of the loop variable and the constant value of the condition must be in the incremental order.
-
-#### Return
-
-1. The current context shouldn't be in the program or a procedure since their return type is void.
-
-(Skip the rest of semantic checks if there are any errors in the node of the expression (return value))
-
-2. The type of the result of the expression (return value) must be the same type as the return type of current function after appropriate type coercion.
+<div align="right">
+    <b><a href="#table-of-contents">↥ back to menu</a></b>
+</div>
 
 ## Implementation Hints
 
-### Recommended Workflow of Developing
+### Using `C` compiler that targets RISC-V
 
-1. Design and implement the symbol table construction and related checks (symbol redeclaration).
-2. Add the switch button of pseudocomment D for turning on/off the symbol table dumping.
-3. Implement one of semantic checks in the order listed in [0x02. Semantic Definition](#0x02-semantic-definition).
-4. Examine the functionality of checks by utilizing the test cases we provide.
-5. Repeat 3 ~ 4. until all semantic checks have been done.
-
-### Symbol Table Construction
-
-Since we need to **push** a symbol table when entering a new scope and **pop** a symbol table when exiting a scope, the property of stack - LIFO is really suitable. As a result, you may have a code snippet like this:
-
-```cpp
-class SymbolEntry {
-private:
-    // Variable names
-    // Kind
-    // Level
-    // ...
-};
-
-class SymbolTable {
-public:
-    void addSymbol(/* attributes needed by a SymbolEntry */);
-    // other methods
-private:
-    std::vector<SymbolEntry> entries;
-};
-
-class SymbolManager {
-public:
-    void pushScope(SymbolTable *new_scope);
-    void popScope();
-    // other methods
-private:
-    std::stack <SymbolTable *> tables;
-};
-```
-
-### Source Code Listing in Semantic Error
-
-To achieve this function, you need to revise your `scanner.l`.
-
-Here are some possible approaches to implement this function:
-
-1. Use `strdup()` to record each line of source code in an array of pointer to `char`.
-2. Record the file position of head of each line in an array of `long`, then use `fseek()` + `fgets()` to get the source code when needed.
-
-> [!note]
-> The maximum lines of code are 200.
-
-### Type Information Propagation
-
-Some semantic checks are related to type incompatibility. You need to design a mechanism to propagate the type information from a child node to its parent node. For example, you need to propagate the type of the result of an expression to a BinaryOperatorNode, so that it can check whether its operation is legal or not.
-
-You may reuse the class/struct used in hw3 for representing the type of P language and then store it in the AST nodes for propagating the type information.
-
-## What Should Your Parser Do?
-
-If the input file is syntactically and semantically correct, output the following message.
+If you have no idea what instructions will be generated from a `P` program, you may write a corresponding `C` program and run the following command to generate `RISC-V` instructions using a `C` compiler. Check out `[output assembly file]` to see what instructions were generated.
 
 ```
-|---------------------------------------------------|
-|  There is no syntactic error and semantic error!  |
-|---------------------------------------------------|
+riscv32-unknown-elf-gcc -c -S [input C file] -o [output assembly file]
 ```
 
-Once the parser encounters a semantic error, output the related error message.
-
-Notice that semantic errors should **not** cause the parser to stop its execution. You should let the parser keep working on finding semantic errors as much as possible.
+<div align="right">
+    <b><a href="#table-of-contents">↥ back to menu</a></b>
+</div>
 
 ## Project Structure
 
 - `README.md`
 - /src
-	- Makefile
-	- `scanner.l`
-	- `parser.y`
-	- /include
-		- /AST
-		- /sema
-			- SemanticAnalyzer.hpp - for semantic analysis in visitor pattern version
-		- /visitor
-	- /lib
-		- /AST
-		- /sema
-			- SemanticAnalyzer.cpp - for semantic analysis in visitor pattern version
-		- /visitor
-	- Other modules you may add
+    - Makefile
+    - `scanner.l`
+    - `parser.y`
+    - /include
+        - /AST
+        - /semantic
+        - /visitor
+        - /codegen
+            - CodeGenerator.hpp - for code generation in visitor pattern version
+    - /lib
+        - /AST
+        - /semantic
+        - /visitor
+        - /codegen
+            - CodeGenerator.cpp - for code generation in visitor pattern version
+    - Other modules you may add
 - /report
-	- `README.md`
+    - `README.md`
 
 In this assignment, you have to do the following tasks:
 
-- Revise `scanner.l`, `parser.y`, and add some modules (e.g., `SymbolTable.[hc]pp`, `SemanticAnalyzer.[hc]pp`) to perform a semantic analysis.
-- Write a report in `report/README.md`. The report should at least describe the changes you have made in `parser.y` and the abilities of your AST.
+- Revise `CodeGenerator.hpp` and `CodeGenerator.cpp`, and add some modules to generate the `RISC-V` instructions.
+- Write the report in `report/README.md`. The report should describe your feedback about `hw5` For example, is the spec and the tutorial clear? Is `hw5` too easy?
 
 If you want to preview your report in GitHub style markdown before pushing to GitHub, [`grip`](https://github.com/joeyespo/grip) might be the tool you need.
 
+<div align="right">
+    <b><a href="#table-of-contents">↥ back to menu</a></b>
+</div>
+
 ## Assessment Rubrics (Grading)
 
-Total of 105 points
+Total of 119 points.
 
-+ Passing all test cases (95 pts)
-+ Report (10 pts) \
-  0: empty \
-  3: bad \
-  5: normal \
-  7: good \
-  10: excellent
++ Passing all the basic cases (60 pts)
++ Passing all the advance cases (35 pts)
++ Report (5 pts)
+  + 0: empty
+  + 1: bad
+  + 3: normal
+  + 4: good
+  + 5: excellent
++ Bonus (Total of 19 pts)
+  + Code generation for boolean types (4 pts)
+  + Code generation for array types (6 pts)
+  + Code generation for string types (3 pts)
+  + Code generation for real types (6 pts)
+
+<div align="right">
+    <b><a href="#table-of-contents">↥ back to menu</a></b>
+</div>
 
 ## Build and Execute
 
-- Get Hw4 docker image: `make docker-pull`
+!!**Attention**!!
+
+If you're using a Mac, and you encounter problems when executing `./activate_docker.sh`. You can try commenting out or removing line 83 in `docker/activate_docker.py`:`'--privileged -v /dev/bus/usb:/dev/bus/usb',`. We're still resolving to find a way to mount in Docker on Mac. So if you're using a Mac, please just use the emulator to test your homework.
+
+
+- Get Hw5 docker image: `make docker-pull`
 - Activate docker environment: `./activate_docker.sh`
 - Build: `make`
-- Execute: `./parser [input file]`
+- Execute: `./compiler [input file] --save-path [save path]`
 - Test: `make test`
+- Test on board: `make board`
 
 ### Build Project
 
-TA would use `src/Makefile` to build your project by simply typing `make clean && make` from the docker container. You have to make sure that it will generate an executable named '`parser`'. **No further grading will be made if the `make` process fails or the executable '`parser`' is not found.**
+TA would use `src/Makefile` to build your project by simply typing `make clean && make`. You have to make sure that it will generate an executable named '`compiler`'. **No further grading will be made if the `make` process fails or the executable '`compiler`' is not found.**
 
-### Test your parser
+### Test your compiler with the simulator
 
-We provide all the test cases in the `test` folder. Simply type `make test` to test your parser. The grade you got will be shown on the terminal. You can also check `diff.txt` in `test/result` folder to know the `diff` result between the outputs of your parser and the sample solutions.
+We provide all the test cases in the `test` folder. Simply type `make test` to test your compiler. The grade you got swill be shown on the terminal. You can also check `diff.txt` in `test/result` folder to know the diff result between the outputs of your compiler and the sample solutions.
 
 Please use `student_` as the prefix of your own tests to prevent TAs from overwriting your files. For example: `student_identifier_test`.
 
+### Simulator Commands
+
+The `RISC-V` simulator has been installed in the docker image. You may install it on your environment. The following commands show how to generate the executable and run the executable on the `RISC-V` simulator.
+
+ - Compile the generated `RISC-V` instructions to the `Executable and Linkable Format (ELF)` file.
+
+```
+riscv32-unknown-elf-gcc -o [output ELF file] [input RISC-V instruction file]
+```
+
+ - Run the `ELF` file on the simulator `spike`.
+
+```
+spike --isa=RV32 /risc-v/riscv32-unknown-elf/bin/pk [ELF file]
+```
+
+### Test your compiler with the RISC-V development board
+
+> [!note]
+> The following test does not count for any points, and you can choose to implement it or not.
+
+We provide the [`Seeed Studio Sipeed Longan Nano`](https://www.seeedstudio.com/Sipeed-Longan-Nano-RISC-V-GD32VF103CBT6-Development-Board-p-4205.html) development board for testing your compiler. Your compiler will be tested with the following tests:
+
+1. Global variable
+2. Local variable
+3. Global constant
+4. Expression
+5. Function definition and function invocation
+6. Function invocation in an expression
+7. Conditional statement
+8. For statement
+9. While statement
+
+The `P` program which is going to be compiled by your compiler will call the functions written in `C` to test the correctness of your compiler, so all the above tests are based on the function declarations and the function invocations.
+
+We use `USB DFU` download to download the compiled executable to the development board, so you should connect your board to your computer by USB TYPE-C cable first. To enter DFU mode, holding down the `BOOT` button, then press the `RESET` button to restart the development board and then release the `BOOT` button. After all, you can simply type `make board` to test your compiler with the board. The results will show on the LCD of the board.
+
+<div align="right">
+    <b><a href="#table-of-contents">↥ back to menu</a></b>
+</div>
+
 ## Submitting the Assignment
 
-You should push all your commits to the designated repository (hw4-\<Name of your GitHub account\>) under the GitHub organization by the deadline (given in the very beginning of this assignment description).
+You should push all your commits to the designated repository (hw5-\<Name of your GitHub account\>) under the GitHub organization by the deadline (given in the very beginning of this assignment description).
 At any point, you may save your work and push commits to your repository. You **must** commit your final version to the **master branch**, and we will grade the commit which is last pushed on your master branch. The **push time** of that commit will be your submission time, so you should not push any commits to the master branch after the deadline if you have finished your assignment; otherwise, you will get a late penalty.
 
-Note that the penalty for late homework is **15% per day** (weekends count as 1 day). Late homework will not be accepted after sample codes have been posted.
-
 In addition, homework assignments **must be individual work**. If we detect what we consider to be intentional plagiarism in any assignment, the assignment will receive reduced or, usually, **zero credit**.
+
+<div align="right">
+    <b><a href="#table-of-contents">↥ back to menu</a></b>
+</div>

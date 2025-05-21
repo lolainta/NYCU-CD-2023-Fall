@@ -3,6 +3,8 @@
 
 #include <memory>
 
+#include "AST/PType.hpp"
+#include "AST/ast.hpp"
 #include "AST/expression.hpp"
 #include "AST/operator.hpp"
 #include "visitor/AstNodeVisitor.hpp"
@@ -18,11 +20,13 @@ class UnaryOperatorNode final : public ExpressionNode {
                     ExpressionNode *p_operand)
       : ExpressionNode{line, col}, m_op(op), m_operand(p_operand) {}
 
+  Operator getOp() const { return m_op; }
+
   const char *getOpCString() const {
     return kOpString[static_cast<size_t>(m_op)];
   }
-  Operator getOp() const { return m_op; }
-  const ExpressionNode *getOperand() const { return m_operand.get(); }
+
+  const ExpressionNode &getOperand() const { return *m_operand.get(); }
 
   void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
   void visitChildNodes(AstNodeVisitor &p_visitor) override;

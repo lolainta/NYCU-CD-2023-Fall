@@ -2,9 +2,10 @@ all: project
 
 .PHONY: restore project test clean autograde
 
-IMAGE_NAME = compiler-f23-hw4
+IMAGE_NAME = compiler-f23-hw5
 DOCKERHUB_HOST_ACCOUNT = laiyt
 IMAGE_FULLNAME = ${DOCKERHUB_HOST_ACCOUNT}/${IMAGE_NAME}:latest
+
 
 # TODO: add a clean build opiton
 project:
@@ -17,7 +18,12 @@ test: project
 test-clean:
 	${MAKE} clean -C test/
 
-clean:	project-clean test-clean
+board: project
+	${MAKE} -C board/
+board-clean:
+	${MAKE} clean -C board/
+
+clean: project-clean test-clean board-clean
 
 docker-pull:
 	docker pull ${IMAGE_FULLNAME}

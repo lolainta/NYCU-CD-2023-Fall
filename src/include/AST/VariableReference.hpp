@@ -15,6 +15,7 @@ class VariableReferenceNode final : public ExpressionNode {
  private:
   std::string m_name;
   ExprNodes m_indices;
+  bool m_lvalue = false;
 
  public:
   ~VariableReferenceNode() = default;
@@ -31,9 +32,13 @@ class VariableReferenceNode final : public ExpressionNode {
         m_name(p_name),
         m_indices(std::move(p_indices)) {}
 
+  const std::string &getName() const { return m_name; }
   const char *getNameCString() const { return m_name.c_str(); }
 
   const ExprNodes &getIndices() const { return m_indices; }
+
+  bool isLvalue() const { return m_lvalue; }
+  void setLvalue() { m_lvalue = true; }
 
   void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
   void visitChildNodes(AstNodeVisitor &p_visitor) override;

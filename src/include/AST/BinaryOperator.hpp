@@ -3,6 +3,8 @@
 
 #include <memory>
 
+#include "AST/PType.hpp"
+#include "AST/ast.hpp"
 #include "AST/expression.hpp"
 #include "AST/operator.hpp"
 #include "visitor/AstNodeVisitor.hpp"
@@ -28,8 +30,10 @@ class BinaryOperatorNode final : public ExpressionNode {
   const char *getOpCString() const {
     return kOpString[static_cast<size_t>(m_op)];
   }
-  std::pair<ExpressionNode *, ExpressionNode *> getOperands() const {
-    return std::make_pair(m_left_operand.get(), m_right_operand.get());
+
+  const ExpressionNode &getLeftOperand() const { return *m_left_operand.get(); }
+  const ExpressionNode &getRightOperand() const {
+    return *m_right_operand.get();
   }
 
   void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }

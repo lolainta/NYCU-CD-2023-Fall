@@ -1,29 +1,23 @@
 #ifndef AST_EXPRESSION_NODE_H
 #define AST_EXPRESSION_NODE_H
 
-#include <cassert>
+#include <memory>
 
 #include "AST/PType.hpp"
 #include "AST/ast.hpp"
+
 class ExpressionNode : public AstNode {
+ protected:
+  // for carrying type of result of an expression
+  std::unique_ptr<PType> m_type;
+
  public:
   ~ExpressionNode() = default;
   ExpressionNode(const uint32_t line, const uint32_t col)
       : AstNode{line, col} {}
-  const PTypeSharedPtr &getTypeSharedPtr() const { return m_type; }
-  const char *getTypeCString() const {
-    return m_type ? m_type->getPTypeCString() : "unknown";
-  }
-  void setType(const PTypeSharedPtr &p_type) {
-    // assert(m_type == nullptr);
-    m_type = p_type;
-  }
-  bool isError() const { return error; }
-  void setError() { error = true; }
 
- protected:
-  PTypeSharedPtr m_type;
-  bool error = false;
+  const PType *getInferredType() const { return m_type.get(); }
+  void setInferredType(PType *p_type) { m_type.reset(p_type); }
 };
 
 #endif

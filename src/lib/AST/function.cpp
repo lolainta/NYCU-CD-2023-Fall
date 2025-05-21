@@ -2,10 +2,19 @@
 
 #include <algorithm>
 
-#include "AST/decl.hpp"
+FunctionNode::DeclNodes::size_type FunctionNode::getParametersNum(
+    const DeclNodes &p_parameters) {
+  FunctionNode::DeclNodes::size_type num = 0;
 
-static std::string getParametersTypeString(
-    const FunctionNode::DeclNodes &p_parameters) {
+  for (const auto &decl_node : p_parameters) {
+    num += decl_node->getVariables().size();
+  }
+
+  return num;
+}
+
+std::string FunctionNode::getParametersTypeString(
+    const DeclNodes &p_parameters) {
   std::string type_string;
 
   for (const auto &parameter : p_parameters) {
@@ -20,19 +29,6 @@ static std::string getParametersTypeString(
   }
 
   return type_string;
-}
-
-const char *FunctionNode::getReturnTypeCString() const {
-  return m_ret_type->getPTypeCString();
-}
-
-const char *FunctionNode::getParametersTypeCString() const {
-  if (!m_parameters_type_string_is_valid) {
-    m_parameters_type_string = getParametersTypeString(m_parameters);
-    m_parameters_type_string_is_valid = true;
-  }
-
-  return m_parameters_type_string.c_str();
 }
 
 const char *FunctionNode::getPrototypeCString() const {
@@ -56,5 +52,11 @@ void FunctionNode::visitChildNodes(AstNodeVisitor &p_visitor) {
 
   if (m_body) {
     visit_ast_node(m_body);
+  }
+}
+
+void FunctionNode::visitBodyChildNodes(AstNodeVisitor &p_visitor) {
+  if (m_body) {
+    m_body->visitChildNodes(p_visitor);
   }
 }

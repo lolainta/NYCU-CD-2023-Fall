@@ -9,6 +9,8 @@
 #include "AST/decl.hpp"
 #include "AST/function.hpp"
 
+class SymbolTable;
+
 class ProgramNode final : public AstNode {
  public:
   using DeclNodes = std::vector<std::unique_ptr<DeclNode>>;
@@ -20,6 +22,8 @@ class ProgramNode final : public AstNode {
   DeclNodes m_decl_nodes;
   FuncNodes m_func_nodes;
   std::unique_ptr<CompoundStatementNode> m_body;
+
+  const SymbolTable *m_symbol_table_ptr = nullptr;
 
  public:
   ~ProgramNode() = default;
@@ -34,6 +38,18 @@ class ProgramNode final : public AstNode {
         m_body(p_body) {}
 
   const char *getNameCString() const { return m_name.c_str(); }
+  const std::string &getName() const { return m_name; }
+
+  const PType *getTypePtr() const { return m_ret_type.get(); }
+
+  const DeclNodes &getDeclNodes() const { return m_decl_nodes; }
+  const FuncNodes &getFuncNodes() const { return m_func_nodes; }
+  const CompoundStatementNode &getBody() const { return *m_body.get(); }
+
+  const SymbolTable *getSymbolTable() const { return m_symbol_table_ptr; }
+  void setSymbolTable(const SymbolTable *p_symbol_table) {
+    m_symbol_table_ptr = p_symbol_table;
+  }
 
   void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
 
