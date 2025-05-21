@@ -92,6 +92,7 @@ def main():
         '-v', f'{os.getcwd()}:/home/{DOCKER_USER_NAME}',
         '--privileged',
         '-v', '/dev/bus/usb:/dev/bus/usb',
+        '-w', '/home/student',
 
         # bash history file
         '-v', f'{dirpath}/.history/docker_bash_history:/{dk_home}/.bash_history',
