@@ -5,7 +5,7 @@ RUN apt-get update \
     && apt-get --no-install-recommends install -y \
     gosu \
     python3 python3-pip python3-setuptools python3-wheel \
-    gcc \
+    gcc gdb \
     build-essential make \
     flex libfl-dev \
     bison libbison-dev \

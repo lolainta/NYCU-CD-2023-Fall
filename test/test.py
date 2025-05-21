@@ -13,19 +13,23 @@ class Grader:
 
     basic_case_dir = "./basic_cases"
     basic_cases = {
-        1 : "1_program",
-        2 : "2_declaration",
-        3 : "3_function",
-        4 : "4_compound",
-        5 : "5_PrintBinUnConstantInvocation",
-        6 : "6_VarRefAssignRead",
-        7 : "7_if",
-        8 : "8_while",
-        9 : "9_for",
-        10: "10_return",
-        11: "11_call"
+        1 : "1_table",
+        2 : "2_redecl",
+        3 : "3_variable",
+        4 : "4_VariableReference",
+        5 : "5_BinaryOperator",
+        6 : "6_UnaryOperator",
+        7 : "7_FunctionInvocation",
+        8 : "8_PrintStatement",
+        9 : "9_ReadStatement",
+        10: "10_assignment",
+        11: "11_condition",
+        12: "12_ForLoop",
+        13: "13_ret",
+        14: "14_AdvSymbol",
+        15: "15_AdvSema"
     }
-    basic_case_scores = [0, 5, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9]
+    basic_case_scores = [0, 10, 9, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, 5]
 
     diff_result = ""
 
@@ -49,7 +53,7 @@ class Grader:
         test_case = "%s/%s/%s.p" % (self.basic_case_dir, "test_cases", self.basic_cases[case_id])
         output_file = "%s/%s" % (self.output_dir, self.basic_cases[case_id])
 
-        clist = [self.parser, test_case, '--dump-ast']
+        clist = [self.parser, test_case]
         try:
             proc = subprocess.Popen(clist, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except Exception as e:
@@ -101,7 +105,7 @@ class Grader:
 
         return retcode == 0
 
-    def run(self):
+    def run(self) -> int:
         print("---\tCase\t\tPoints")
 
         total_score = 0
@@ -130,6 +134,11 @@ class Grader:
         diff.write(self.diff_result)
         diff.close()
 
+        # NOTE: Return 1 on test failure to support GitHub CI; otherwise, such CI never fails.
+        if total_score != max_score:
+            return 1
+        return 0
+
     @staticmethod
     def set_text_color(test_passed: bool) -> None:
         """Sets the color based on whether the test has passed or not."""
@@ -144,7 +153,7 @@ class Grader:
         print(colorama.Style.RESET_ALL, end='')
 
 
-def main():
+def main() -> int:
     parser = ArgumentParser()
     parser.add_argument("--parser", help="parser to grade", default="../src/parser")
     parser.add_argument("--basic_case_id", help="test case's ID", type=int, default=0)
@@ -152,7 +161,7 @@ def main():
 
     g = Grader(parser = args.parser)
     g.get_case_id_list(args.basic_case_id)
-    g.run()
+    return g.run()
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

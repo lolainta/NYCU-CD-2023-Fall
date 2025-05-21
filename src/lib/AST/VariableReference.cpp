@@ -1,24 +1,9 @@
 #include "AST/VariableReference.hpp"
 
-VariableReferenceNode::VariableReferenceNode(const uint32_t line,
-                                             const uint32_t col,
-                                             std::string *p_name,
-                                             std::vector<AstNode *> *p_expressions)
-    : ExpressionNode{line, col}, name(*p_name)
-{
-    for (auto &expression : *p_expressions)
-    {
-        expressions.push_back(dynamic_cast<ExpressionNode *>(expression));
-    }
-}
-const char *VariableReferenceNode::getNameCString() const { return name.c_str(); }
+#include <algorithm>
 
-void VariableReferenceNode::accept(AstNodeVisitor &p_visitor) { p_visitor.visit(*this); }
+void VariableReferenceNode::visitChildNodes(AstNodeVisitor &p_visitor) {
+  auto visit_ast_node = [&](auto &ast_node) { ast_node->accept(p_visitor); };
 
-void VariableReferenceNode::visitChildNodes(AstNodeVisitor &p_visitor)
-{
-    for (auto &expression : expressions)
-    {
-        expression->accept(p_visitor);
-    }
+  for_each(m_indices.begin(), m_indices.end(), visit_ast_node);
 }

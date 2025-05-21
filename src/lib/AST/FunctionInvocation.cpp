@@ -1,31 +1,9 @@
 #include "AST/FunctionInvocation.hpp"
 
-FunctionInvocationNode::FunctionInvocationNode(const uint32_t line,
-                                               const uint32_t col,
-                                               std::string *p_name,
-                                               std::vector<AstNode *> *p_expressions)
-    : ExpressionNode{line, col}, name(*p_name)
-{
-    for (auto &expr : *p_expressions)
-    {
-        expressions.push_back(dynamic_cast<ExpressionNode *>(expr));
-    }
-}
+#include <algorithm>
 
-const char *FunctionInvocationNode::getNameCString() const
-{
-    return name.c_str();
-}
+void FunctionInvocationNode::visitChildNodes(AstNodeVisitor &p_visitor) {
+  auto visit_ast_node = [&](auto &ast_node) { ast_node->accept(p_visitor); };
 
-void FunctionInvocationNode::accept(AstNodeVisitor &p_visitor)
-{
-    p_visitor.visit(*this);
-}
-
-void FunctionInvocationNode::visitChildNodes(AstNodeVisitor &p_visitor)
-{
-    for (auto &expr : expressions)
-    {
-        expr->accept(p_visitor);
-    }
+  for_each(m_args.begin(), m_args.end(), visit_ast_node);
 }

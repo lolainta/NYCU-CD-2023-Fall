@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "parser.h"
 
 #define YY_USER_ACTION \
@@ -29,6 +30,7 @@ char current_line[MAX_LINE_LENG];
 
 static uint32_t opt_src = 1;
 static uint32_t opt_tok = 1;
+uint32_t opt_sym = 1;
 static char string_literal[MAX_LINE_LENG];
 static char *current_line_ptr = current_line;
 
@@ -39,8 +41,11 @@ static void appendToCurrentLine(const char *yytext_ptr);
 integer 0|[1-9][0-9]*
 float {integer}\.(0|[0-9]*[1-9])
 nonzero_integer [1-9][0-9]*
+    /* If the integral part is nonzero, then the fractional part can be either zero
+    or not. However, if the integral part is zero, the fractional part cannot be zero. */
 nonzero_float ({nonzero_integer}\.(0|[0-9]*[1-9]))|(0\.([0-9]*[1-9]))
 
+    /* exclusive start condition */
 %x CCOMMENT
 
 %%
@@ -79,8 +84,16 @@ nonzero_float ({nonzero_integer}\.(0|[0-9]*[1-9]))|(0\.([0-9]*[1-9]))
 "real"    { LIST_TOKEN("KWreal"); return REAL; }
 "string"  { LIST_TOKEN("KWstring"); return STRING; }
 
-"true"    { LIST_TOKEN("KWtrue"); return TRUE; }
-"false"   { LIST_TOKEN("KWfalse"); return FALSE; }
+"true"    {
+    LIST_TOKEN("KWtrue");
+    yylval.boolean = true;
+    return TRUE;
+}
+"false"   {
+    LIST_TOKEN("KWfalse");
+    yylval.boolean = false;
+    return FALSE;
+}
 
 "def"     { LIST_TOKEN("KWdef"); return DEF; }
 "return"  { LIST_TOKEN("KWreturn"); return RETURN; }
@@ -104,15 +117,14 @@ nonzero_float ({nonzero_integer}\.(0|[0-9]*[1-9]))|(0\.([0-9]*[1-9]))
     /* Identifier */
 [a-zA-Z][a-zA-Z0-9]* {
     LIST_LITERAL("id", yytext);
-    // yylval.identifier = strndup(yytext, MAX_ID_LENG);
-    yylval.str = new std::string(yytext);
+    yylval.identifier = strndup(yytext, MAX_ID_LENG);
     return ID;
 }
 
     /* Integer (decimal/octal) */
 {integer} {
-    LIST_LITERAL("integer", yytext); 
-    yylval.integer = atoi(yytext);
+    LIST_LITERAL("integer", yytext);
+    yylval.integer = strtol(yytext, NULL, 10);
     return INT_LITERAL;
 }
 0[0-7]+   {
@@ -158,7 +170,7 @@ nonzero_float ({nonzero_integer}\.(0|[0-9]*[1-9]))|(0\.([0-9]*[1-9]))
     }
     *str_ptr = '\0';
     LIST_LITERAL("string", string_literal);
-    yylval.str = new std::string(string_literal);
+    yylval.string = strdup(string_literal);
     return STRING_LITERAL;
 }
 
@@ -166,7 +178,7 @@ nonzero_float ({nonzero_integer}\.(0|[0-9]*[1-9]))|(0\.([0-9]*[1-9]))
 [ \t]+ { LIST_SOURCE; }
 
     /* Pseudocomment */
-"//&"[ST][+-].* {
+"//&"[STD][+-].* {
     LIST_SOURCE;
     char option = yytext[3];
     switch (option) {
@@ -175,6 +187,9 @@ nonzero_float ({nonzero_integer}\.(0|[0-9]*[1-9]))|(0\.([0-9]*[1-9]))
         break;
     case 'T':
         opt_tok = (yytext[4] == '+') ? 1 : 0;
+        break;
+    case 'D':
+        opt_sym = (yytext[4] == '+') ? 1 : 0;
         break;
     }
 }

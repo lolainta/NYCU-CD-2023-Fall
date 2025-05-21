@@ -1,6 +1,7 @@
-#ifndef __VISITOR_AST_NODE_VISITOR_H
-#define __VISITOR_AST_NODE_VISITOR_H
+#ifndef __VISITOR_H
+#define __VISITOR_H
 
+// Forward declaration of AST nodes
 class ProgramNode;
 class DeclNode;
 class VariableNode;
@@ -19,9 +20,8 @@ class WhileNode;
 class ForNode;
 class ReturnNode;
 
-class AstNodeVisitor
-{
-public:
+class AstNodeVisitor {
+ public:
   virtual ~AstNodeVisitor() = 0;
 
   virtual void visit(ProgramNode &p_program) {}

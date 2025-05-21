@@ -1,33 +1,60 @@
 #include "AST/function.hpp"
 
-FunctionNode::FunctionNode(const uint32_t line,
-                           const uint32_t col,
-                           std::string *name,
-                           std::vector<AstNode *> *var_decls,
-                           PType *return_type)
-    : AstNode{line, col}, name(*name), return_type(*return_type)
-{
-    for (auto &decl : *var_decls)
-    {
-        this->var_decls.push_back(dynamic_cast<DeclNode *>(decl));
+#include <algorithm>
+
+#include "AST/decl.hpp"
+
+static std::string getParametersTypeString(
+    const FunctionNode::DeclNodes &p_parameters) {
+  std::string type_string;
+
+  for (const auto &parameter : p_parameters) {
+    for (const auto &var_node : parameter->getVariables()) {
+      type_string.append(var_node->getTypeCString()).append(", ");
     }
+  }
+
+  if (!p_parameters.empty()) {
+    // remove trailing ", "
+    type_string.erase(type_string.end() - 2, type_string.end());
+  }
+
+  return type_string;
 }
 
-const char *FunctionNode::getNameCString() const { return name.c_str(); }
-const PType &FunctionNode::getReturnType() const { return return_type; }
-const std::vector<DeclNode *> &FunctionNode::getVarDecls() const { return var_decls; }
-void FunctionNode::setBody(AstNode *body) { this->body = dynamic_cast<CompoundStatementNode *>(body); }
+const char *FunctionNode::getReturnTypeCString() const {
+  return m_ret_type->getPTypeCString();
+}
 
-void FunctionNode::accept(AstNodeVisitor &p_visitor) { p_visitor.visit(*this); }
+const char *FunctionNode::getParametersTypeCString() const {
+  if (!m_parameters_type_string_is_valid) {
+    m_parameters_type_string = getParametersTypeString(m_parameters);
+    m_parameters_type_string_is_valid = true;
+  }
 
-void FunctionNode::visitChildNodes(AstNodeVisitor &p_visitor)
-{
-    for (auto &decl : var_decls)
-    {
-        decl->accept(p_visitor);
-    }
-    if (body != nullptr)
-    {
-        body->accept(p_visitor);
-    }
+  return m_parameters_type_string.c_str();
+}
+
+const char *FunctionNode::getPrototypeCString() const {
+  if (!m_prototype_string_is_valid) {
+    m_prototype_string = m_ret_type->getPTypeCString();
+
+    m_prototype_string += " (";
+    m_prototype_string += getParametersTypeString(m_parameters);
+    m_prototype_string += ")";
+
+    m_prototype_string_is_valid = true;
+  }
+
+  return m_prototype_string.c_str();
+}
+
+void FunctionNode::visitChildNodes(AstNodeVisitor &p_visitor) {
+  auto visit_ast_node = [&](auto &ast_node) { ast_node->accept(p_visitor); };
+
+  for_each(m_parameters.begin(), m_parameters.end(), visit_ast_node);
+
+  if (m_body) {
+    visit_ast_node(m_body);
+  }
 }

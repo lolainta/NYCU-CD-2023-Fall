@@ -1,32 +1,35 @@
-#ifndef __AST_CONSTANT_VALUE_NODE_H
-#define __AST_CONSTANT_VALUE_NODE_H
+#ifndef AST_CONSTANT_VALUE_NODE_H
+#define AST_CONSTANT_VALUE_NODE_H
 
+#include <memory>
+
+#include "AST/PType.hpp"
+#include "AST/constant.hpp"
 #include "AST/expression.hpp"
-#include "enums.hpp"
 #include "visitor/AstNodeVisitor.hpp"
 
-#include <cstring>
-#include <string>
+class ConstantValueNode final : public ExpressionNode {
+ private:
+  std::unique_ptr<Constant> m_constant_ptr;
 
-class ConstantValueNode : public ExpressionNode
-{
-public:
-  ConstantValueNode(const uint32_t line,
-                    const uint32_t col,
-                    PType type,
-                    const char *str_val,
-                    int32_t int_val,
-                    double real_val,
-                    bool bool_val);
+ public:
   ~ConstantValueNode() = default;
+  ConstantValueNode(const uint32_t line, const uint32_t col,
+                    Constant *const p_constant)
+      : ExpressionNode{line, col}, m_constant_ptr(p_constant) {}
 
-  const PType getType() const;
-  const ConstantValue getValue() const;
+  const PTypeSharedPtr &getTypeSharedPtr() const {
+    return m_constant_ptr->getTypeSharedPtr();
+  }
 
-  void accept(AstNodeVisitor &p_visitor) override;
+  const char *getConstantValueCString() const {
+    return m_constant_ptr->getConstantValueCString();
+  }
 
-private:
-  ConstantValue value;
+  void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
+  Constant::ConstantValue getConstantValue() const {
+    return m_constant_ptr->getConstantValue();
+  }
 };
 
 #endif

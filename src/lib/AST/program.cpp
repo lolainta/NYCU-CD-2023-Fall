@@ -1,43 +1,15 @@
 #include "AST/program.hpp"
 
-ProgramNode::ProgramNode(const uint32_t line,
-                         const uint32_t col,
-                         std::string *p_name,
-                         std::vector<AstNode *> *p_var_decls,
-                         std::vector<AstNode *> *p_func_decls,
-                         AstNode *p_body)
-    : AstNode{line, col}, name(*p_name)
-{
-    for (auto &decl : *p_var_decls)
-    {
-        var_decls.push_back(dynamic_cast<DeclNode *>(decl));
-    }
-    for (auto &decl : *p_func_decls)
-    {
-        func_decls.push_back(dynamic_cast<FunctionNode *>(decl));
-    }
-    body = dynamic_cast<CompoundStatementNode *>(p_body);
-}
+#include <algorithm>
 
-const char *ProgramNode::getNameCString() const
-{
-    return name.c_str();
-}
+#include "AST/AstDumper.hpp"
+#include "AST/CompoundStatement.hpp"
 
-void ProgramNode::accept(AstNodeVisitor &p_visitor)
-{
-    p_visitor.visit(*this);
-}
+void ProgramNode::visitChildNodes(AstNodeVisitor &p_visitor) {
+  auto visit_ast_node = [&](auto &ast_node) { ast_node->accept(p_visitor); };
 
-void ProgramNode::visitChildNodes(AstNodeVisitor &p_visitor)
-{
-    for (auto &decl : var_decls)
-    {
-        decl->accept(p_visitor);
-    }
-    for (auto &decl : func_decls)
-    {
-        decl->accept(p_visitor);
-    }
-    body->accept(p_visitor);
+  for_each(m_decl_nodes.begin(), m_decl_nodes.end(), visit_ast_node);
+  for_each(m_func_nodes.begin(), m_func_nodes.end(), visit_ast_node);
+
+  visit_ast_node(m_body);
 }

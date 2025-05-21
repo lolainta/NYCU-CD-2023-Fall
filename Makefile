@@ -2,19 +2,18 @@ all: project
 
 .PHONY: restore project test clean autograde
 
-IMAGE_NAME = compiler-f23-hw3
+IMAGE_NAME = compiler-f23-hw4
 DOCKERHUB_HOST_ACCOUNT = laiyt
 IMAGE_FULLNAME = ${DOCKERHUB_HOST_ACCOUNT}/${IMAGE_NAME}:latest
 
-
 # TODO: add a clean build opiton
 project:
-	make -C src/
+	${MAKE} -C src/
 project-clean:
 	${MAKE} clean -C src/
 
 test: project
-	make -C test/
+	${MAKE} -C test/
 test-clean:
 	${MAKE} clean -C test/
 
@@ -23,8 +22,12 @@ clean:	project-clean test-clean
 docker-pull:
 	docker pull ${IMAGE_FULLNAME}
 
+# NOTE: The test script exits with 1 if any test case fails, causing Make itself to fail by default.
+# This results in the error being treated as a compilation error, preventing the `diff` of the
+# outputs from being taken, leading to incorrect content in the diff section of the report.
+# To address this, `--ignore-errors` is added to Make to allow it to succeed even if the testing process fails.
 autograde: clean
-	make project && make test
+	${MAKE} project && ${MAKE} --ignore-errors test
 
 # Docker
 # ========================================================

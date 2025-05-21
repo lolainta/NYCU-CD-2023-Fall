@@ -1,28 +1,42 @@
-#ifndef __AST_VARIABLE_REFERENCE_NODE_H
-#define __AST_VARIABLE_REFERENCE_NODE_H
+#ifndef AST_VARIABLE_REFERENCE_NODE_H
+#define AST_VARIABLE_REFERENCE_NODE_H
+
+#include <memory>
+#include <string>
+#include <vector>
 
 #include "AST/expression.hpp"
 #include "visitor/AstNodeVisitor.hpp"
 
-#include <string>
-#include <vector>
+class VariableReferenceNode final : public ExpressionNode {
+ public:
+  using ExprNodes = std::vector<std::unique_ptr<ExpressionNode>>;
 
-class VariableReferenceNode : public ExpressionNode
-{
-public:
-  VariableReferenceNode(const uint32_t line, const uint32_t col,
-                        std::string *p_name,
-                        std::vector<AstNode *> *p_expressions);
+ private:
+  std::string m_name;
+  ExprNodes m_indices;
+
+ public:
   ~VariableReferenceNode() = default;
 
-  const char *getNameCString() const;
+  // normal reference
+  VariableReferenceNode(const uint32_t line, const uint32_t col,
+                        const char *const p_name)
+      : ExpressionNode{line, col}, m_name(p_name) {}
 
-  void accept(AstNodeVisitor &p_visitor) override;
-  void visitChildNodes(AstNodeVisitor &p_visitor);
+  // array reference
+  VariableReferenceNode(const uint32_t line, const uint32_t col,
+                        const char *const p_name, ExprNodes &p_indices)
+      : ExpressionNode{line, col},
+        m_name(p_name),
+        m_indices(std::move(p_indices)) {}
 
-private:
-  std::string name;
-  std::vector<ExpressionNode *> expressions;
+  const char *getNameCString() const { return m_name.c_str(); }
+
+  const ExprNodes &getIndices() const { return m_indices; }
+
+  void accept(AstNodeVisitor &p_visitor) override { p_visitor.visit(*this); }
+  void visitChildNodes(AstNodeVisitor &p_visitor) override;
 };
 
 #endif

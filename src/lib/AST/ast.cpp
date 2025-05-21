@@ -1,9 +1,9 @@
-#include "AST/ast.hpp"
+#include <AST/ast.hpp>
 
-const Location &AstNode::getLocation() const { return location; }
+// prevent the linker from complaining
+AstNode::~AstNode() {}
 
-AstNode::AstNode(const uint32_t line,
-                 const uint32_t col)
+AstNode::AstNode(const uint32_t line, const uint32_t col)
     : location(line, col) {}
 
-AstNode::~AstNode() {}
+const Location &AstNode::getLocation() const { return location; }

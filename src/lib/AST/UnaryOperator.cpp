@@ -1,20 +1,7 @@
 #include "AST/UnaryOperator.hpp"
 
-UnaryOperatorNode::UnaryOperatorNode(const uint32_t line,
-                                     const uint32_t col,
-                                     Operator op, AstNode *expr)
-    : ExpressionNode{line, col}, op(op)
-{
-    this->expr = dynamic_cast<ExpressionNode *>(expr);
-}
-Operator UnaryOperatorNode::getOperator() const { return op; }
+void UnaryOperatorNode::visitChildNodes(AstNodeVisitor &p_visitor) {
+  auto visit_ast_node = [&](auto &ast_node) { ast_node->accept(p_visitor); };
 
-void UnaryOperatorNode::accept(AstNodeVisitor &p_visitor)
-{
-    p_visitor.visit(*this);
-}
-
-void UnaryOperatorNode::visitChildNodes(AstNodeVisitor &p_visitor)
-{
-    expr->accept(p_visitor);
+  visit_ast_node(m_operand);
 }

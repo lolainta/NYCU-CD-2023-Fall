@@ -1,18 +1,18 @@
-#ifndef __AST_AST_DUMPER_H
-#define __AST_AST_DUMPER_H
-
-#include "visitor/AstNodeVisitor.hpp"
-#include "enums.hpp"
+#ifndef AST_AST_DUMPER_H
+#define AST_AST_DUMPER_H
 
 #include <cstdint>
-#include <string>
 
-class AstDumper final : public AstNodeVisitor
-{
+#include "visitor/AstNodeVisitor.hpp"
 
-public:
-  AstDumper() = default;
+class AstDumper final : public AstNodeVisitor {
+ private:
+  uint32_t m_indentation_stride = 2;
+  uint32_t m_indentation = 0;
+
+ public:
   ~AstDumper() = default;
+  AstDumper() = default;
 
   void visit(ProgramNode &p_program) override;
   void visit(DeclNode &p_decl) override;
@@ -32,15 +32,9 @@ public:
   void visit(ForNode &p_for) override;
   void visit(ReturnNode &p_return) override;
 
-private:
-  uint32_t m_indentation_stride = 2;
-  uint32_t m_indentation = 0;
-
+ private:
   void incrementIndentation();
   void decrementIndentation();
-  std::string typeToString(const PType &type);
-  const char *valueToString(const PType type, const ConstantValue value);
-  std::string operatorToString(const Operator op);
 };
 
 #endif

@@ -1,34 +1,24 @@
 #include "AST/decl.hpp"
-#include <cassert>
 
-DeclNode::DeclNode(const uint32_t line,
-                   const uint32_t col,
-                   std::vector<AstNode *> *p_var_list)
-    : AstNode{line, col}
-{
-    var_list = new std::vector<VariableNode *>();
-    for (auto &var : *p_var_list)
-    {
-        var_list->push_back(dynamic_cast<VariableNode *>(var));
-    }
+#include <algorithm>
+
+void DeclNode::init(const std::vector<IdInfo> *const p_ids,
+                    const PTypeSharedPtr &p_type,
+                    ConstantValueNode *const p_constant) {
+  std::shared_ptr<ConstantValueNode> shared_constant(p_constant);
+
+  auto make_variable_node_and_emplace_back_in_var_nodes =
+      [&](const IdInfo &id_info) {
+        m_var_nodes.emplace_back(
+            new VariableNode(id_info.location.line, id_info.location.col,
+                             id_info.id, p_type, shared_constant));
+      };
+
+  for_each(p_ids->begin(), p_ids->end(),
+           make_variable_node_and_emplace_back_in_var_nodes);
 }
 
-std::vector<PType> DeclNode::getTypes()
-{
-    std::vector<PType> types;
-    for (auto &id : *var_list)
-    {
-        types.push_back(id->getType());
-    }
-    return types;
-}
-
-void DeclNode::accept(AstNodeVisitor &p_visitor) { p_visitor.visit(*this); }
-
-void DeclNode::visitChildNodes(AstNodeVisitor &p_visitor)
-{
-    for (auto &id : *var_list)
-    {
-        id->accept(p_visitor);
-    }
+void DeclNode::visitChildNodes(AstNodeVisitor &p_visitor) {
+  auto visit_var_node = [&](auto &var_node) { var_node->accept(p_visitor); };
+  for_each(m_var_nodes.begin(), m_var_nodes.end(), visit_var_node);
 }

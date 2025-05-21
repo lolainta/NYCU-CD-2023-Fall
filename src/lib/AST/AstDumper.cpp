@@ -1,4 +1,7 @@
 #include "AST/AstDumper.hpp"
+
+#include <cstdio>
+
 #include "AST/BinaryOperator.hpp"
 #include "AST/CompoundStatement.hpp"
 #include "AST/ConstantValue.hpp"
@@ -17,346 +20,209 @@
 #include "AST/variable.hpp"
 #include "AST/while.hpp"
 
-#include <cstdio>
-
-void AstDumper::incrementIndentation()
-{
-    m_indentation += m_indentation_stride;
+void AstDumper::incrementIndentation() {
+  m_indentation += m_indentation_stride;
 }
 
-void AstDumper::decrementIndentation()
-{
-    m_indentation -= m_indentation_stride;
+void AstDumper::decrementIndentation() {
+  m_indentation -= m_indentation_stride;
 }
 
-static void outputIndentationSpace(const uint32_t indentation)
-{
-    std::printf("%*s", indentation, "");
+static void outputIndentationSpace(const uint32_t indentation) {
+  std::printf("%*s", indentation, "");
 }
 
-void AstDumper::visit(ProgramNode &p_program)
-{
-    outputIndentationSpace(m_indentation);
+void AstDumper::visit(ProgramNode &p_program) {
+  outputIndentationSpace(m_indentation);
 
-    std::printf(
-        "program <line: %u, col: %u> %s %s\n",
-        p_program.getLocation().line,
-        p_program.getLocation().col,
-        p_program.getNameCString(),
-        "void");
+  std::printf("program <line: %u, col: %u> %s %s\n",
+              p_program.getLocation().line, p_program.getLocation().col,
+              p_program.getNameCString(), "void");
 
-    incrementIndentation();
-    p_program.visitChildNodes(*this);
-    decrementIndentation();
+  incrementIndentation();
+  p_program.visitChildNodes(*this);
+  decrementIndentation();
 }
 
-void AstDumper::visit(DeclNode &p_decl)
-{
-    outputIndentationSpace(m_indentation);
+void AstDumper::visit(DeclNode &p_decl) {
+  outputIndentationSpace(m_indentation);
 
-    std::printf(
-        "declaration <line: %u, col: %u>\n",
-        p_decl.getLocation().line,
-        p_decl.getLocation().col);
+  std::printf("declaration <line: %u, col: %u>\n", p_decl.getLocation().line,
+              p_decl.getLocation().col);
 
-    incrementIndentation();
-    p_decl.visitChildNodes(*this);
-    decrementIndentation();
+  incrementIndentation();
+  p_decl.visitChildNodes(*this);
+  decrementIndentation();
 }
 
-void AstDumper::visit(VariableNode &p_variable)
-{
-    outputIndentationSpace(m_indentation);
-    std::printf("variable <line: %u, col: %u> %s %s\n",
-                p_variable.getLocation().line,
-                p_variable.getLocation().col,
-                p_variable.getName().c_str(),
-                typeToString(p_variable.getType()).c_str());
+void AstDumper::visit(VariableNode &p_variable) {
+  outputIndentationSpace(m_indentation);
 
-    incrementIndentation();
-    p_variable.visitChildNodes(*this);
-    decrementIndentation();
+  std::printf("variable <line: %u, col: %u> %s %s\n",
+              p_variable.getLocation().line, p_variable.getLocation().col,
+              p_variable.getNameCString(), p_variable.getTypeCString());
+
+  incrementIndentation();
+  p_variable.visitChildNodes(*this);
+  decrementIndentation();
 }
 
-void AstDumper::visit(ConstantValueNode &p_constant_value)
-{
-    outputIndentationSpace(m_indentation);
+void AstDumper::visit(ConstantValueNode &p_constant_value) {
+  outputIndentationSpace(m_indentation);
 
-    std::printf("constant <line: %u, col: %u> %s\n",
-                p_constant_value.getLocation().line,
-                p_constant_value.getLocation().col,
-                valueToString(p_constant_value.getType(), p_constant_value.getValue()));
+  std::printf("constant <line: %u, col: %u> %s\n",
+              p_constant_value.getLocation().line,
+              p_constant_value.getLocation().col,
+              p_constant_value.getConstantValueCString());
 }
 
-void AstDumper::visit(FunctionNode &p_function)
-{
-    outputIndentationSpace(m_indentation);
+void AstDumper::visit(FunctionNode &p_function) {
+  outputIndentationSpace(m_indentation);
 
-    std::string args = "";
-    for (auto &arg : p_function.getVarDecls())
-    {
-        for (auto &type : arg->getTypes())
-        {
-            args += typeToString(type) + ", ";
-        }
-    }
-    if (args.size())
-    {
-        args.pop_back();
-        args.pop_back();
-    }
-    args = "(" + args + ")";
-    std::printf("function declaration <line: %u, col: %u> %s %s %s\n",
-                p_function.getLocation().line, p_function.getLocation().col,
-                p_function.getNameCString(),
-                typeToString(p_function.getReturnType()).c_str(),
-                args.c_str());
+  std::printf("function declaration <line: %u, col: %u> %s %s\n",
+              p_function.getLocation().line, p_function.getLocation().col,
+              p_function.getNameCString(), p_function.getPrototypeCString());
 
-    incrementIndentation();
-    p_function.visitChildNodes(*this);
-    decrementIndentation();
+  incrementIndentation();
+  p_function.visitChildNodes(*this);
+  decrementIndentation();
 }
 
-void AstDumper::visit(CompoundStatementNode &p_compound_statement)
-{
-    outputIndentationSpace(m_indentation);
-    std::printf("compound statement <line: %u, col: %u>\n",
-                p_compound_statement.getLocation().line,
-                p_compound_statement.getLocation().col);
+void AstDumper::visit(CompoundStatementNode &p_compound_statement) {
+  outputIndentationSpace(m_indentation);
 
-    incrementIndentation();
-    p_compound_statement.visitChildNodes(*this);
-    decrementIndentation();
+  std::printf("compound statement <line: %u, col: %u>\n",
+              p_compound_statement.getLocation().line,
+              p_compound_statement.getLocation().col);
+
+  incrementIndentation();
+  p_compound_statement.visitChildNodes(*this);
+  decrementIndentation();
 }
 
-void AstDumper::visit(PrintNode &p_print)
-{
-    outputIndentationSpace(m_indentation);
+void AstDumper::visit(PrintNode &p_print) {
+  outputIndentationSpace(m_indentation);
 
-    std::printf("print statement <line: %u, col: %u>\n",
-                p_print.getLocation().line, p_print.getLocation().col);
+  std::printf("print statement <line: %u, col: %u>\n",
+              p_print.getLocation().line, p_print.getLocation().col);
 
-    incrementIndentation();
-    p_print.visitChildNodes(*this);
-    decrementIndentation();
+  incrementIndentation();
+  p_print.visitChildNodes(*this);
+  decrementIndentation();
 }
 
-void AstDumper::visit(BinaryOperatorNode &p_bin_op)
-{
-    outputIndentationSpace(m_indentation);
+void AstDumper::visit(BinaryOperatorNode &p_bin_op) {
+  outputIndentationSpace(m_indentation);
 
-    std::printf("binary operator <line: %u, col: %u> %s\n",
-                p_bin_op.getLocation().line,
-                p_bin_op.getLocation().col,
-                operatorToString(p_bin_op.getOperator()).c_str());
+  std::printf("binary operator <line: %u, col: %u> %s\n",
+              p_bin_op.getLocation().line, p_bin_op.getLocation().col,
+              p_bin_op.getOpCString());
 
-    incrementIndentation();
-    p_bin_op.visitChildNodes(*this);
-    decrementIndentation();
+  incrementIndentation();
+  p_bin_op.visitChildNodes(*this);
+  decrementIndentation();
 }
 
-void AstDumper::visit(UnaryOperatorNode &p_un_op)
-{
-    outputIndentationSpace(m_indentation);
+void AstDumper::visit(UnaryOperatorNode &p_un_op) {
+  outputIndentationSpace(m_indentation);
 
-    std::printf("unary operator <line: %u, col: %u> %s\n",
-                p_un_op.getLocation().line,
-                p_un_op.getLocation().col,
-                operatorToString(p_un_op.getOperator()).c_str());
+  std::printf("unary operator <line: %u, col: %u> %s\n",
+              p_un_op.getLocation().line, p_un_op.getLocation().col,
+              p_un_op.getOpCString());
 
-    incrementIndentation();
-    p_un_op.visitChildNodes(*this);
-    decrementIndentation();
+  incrementIndentation();
+  p_un_op.visitChildNodes(*this);
+  decrementIndentation();
 }
 
-void AstDumper::visit(FunctionInvocationNode &p_func_invocation)
-{
-    outputIndentationSpace(m_indentation);
+void AstDumper::visit(FunctionInvocationNode &p_func_invocation) {
+  outputIndentationSpace(m_indentation);
 
-    std::printf("function invocation <line: %u, col: %u> %s\n",
-                p_func_invocation.getLocation().line,
-                p_func_invocation.getLocation().col,
-                p_func_invocation.getNameCString());
+  std::printf("function invocation <line: %u, col: %u> %s\n",
+              p_func_invocation.getLocation().line,
+              p_func_invocation.getLocation().col,
+              p_func_invocation.getNameCString());
 
-    incrementIndentation();
-    p_func_invocation.visitChildNodes(*this);
-    decrementIndentation();
+  incrementIndentation();
+  p_func_invocation.visitChildNodes(*this);
+  decrementIndentation();
 }
 
-void AstDumper::visit(VariableReferenceNode &p_variable_ref)
-{
-    outputIndentationSpace(m_indentation);
+void AstDumper::visit(VariableReferenceNode &p_variable_ref) {
+  outputIndentationSpace(m_indentation);
 
-    std::printf("variable reference <line: %u, col: %u> %s\n",
-                p_variable_ref.getLocation().line,
-                p_variable_ref.getLocation().col,
-                p_variable_ref.getNameCString());
+  std::printf("variable reference <line: %u, col: %u> %s\n",
+              p_variable_ref.getLocation().line,
+              p_variable_ref.getLocation().col,
+              p_variable_ref.getNameCString());
 
-    incrementIndentation();
-    p_variable_ref.visitChildNodes(*this);
-    decrementIndentation();
+  incrementIndentation();
+  p_variable_ref.visitChildNodes(*this);
+  decrementIndentation();
 }
 
-void AstDumper::visit(AssignmentNode &p_assignment)
-{
-    outputIndentationSpace(m_indentation);
+void AstDumper::visit(AssignmentNode &p_assignment) {
+  outputIndentationSpace(m_indentation);
 
-    std::printf("assignment statement <line: %u, col: %u>\n",
-                p_assignment.getLocation().line,
-                p_assignment.getLocation().col);
+  std::printf("assignment statement <line: %u, col: %u>\n",
+              p_assignment.getLocation().line, p_assignment.getLocation().col);
 
-    incrementIndentation();
-    p_assignment.visitChildNodes(*this);
-    decrementIndentation();
+  incrementIndentation();
+  p_assignment.visitChildNodes(*this);
+  decrementIndentation();
 }
 
-void AstDumper::visit(ReadNode &p_read)
-{
-    outputIndentationSpace(m_indentation);
+void AstDumper::visit(ReadNode &p_read) {
+  outputIndentationSpace(m_indentation);
 
-    std::printf("read statement <line: %u, col: %u>\n",
-                p_read.getLocation().line, p_read.getLocation().col);
+  std::printf("read statement <line: %u, col: %u>\n", p_read.getLocation().line,
+              p_read.getLocation().col);
 
-    incrementIndentation();
-    p_read.visitChildNodes(*this);
-    decrementIndentation();
+  incrementIndentation();
+  p_read.visitChildNodes(*this);
+  decrementIndentation();
 }
 
-void AstDumper::visit(IfNode &p_if)
-{
-    outputIndentationSpace(m_indentation);
+void AstDumper::visit(IfNode &p_if) {
+  outputIndentationSpace(m_indentation);
 
-    std::printf("if statement <line: %u, col: %u>\n", p_if.getLocation().line,
-                p_if.getLocation().col);
+  std::printf("if statement <line: %u, col: %u>\n", p_if.getLocation().line,
+              p_if.getLocation().col);
 
-    incrementIndentation();
-    p_if.visitChildNodes(*this);
-    decrementIndentation();
+  incrementIndentation();
+  p_if.visitChildNodes(*this);
+  decrementIndentation();
 }
 
-void AstDumper::visit(WhileNode &p_while)
-{
-    outputIndentationSpace(m_indentation);
+void AstDumper::visit(WhileNode &p_while) {
+  outputIndentationSpace(m_indentation);
 
-    std::printf("while statement <line: %u, col: %u>\n",
-                p_while.getLocation().line, p_while.getLocation().col);
+  std::printf("while statement <line: %u, col: %u>\n",
+              p_while.getLocation().line, p_while.getLocation().col);
 
-    incrementIndentation();
-    p_while.visitChildNodes(*this);
-    decrementIndentation();
+  incrementIndentation();
+  p_while.visitChildNodes(*this);
+  decrementIndentation();
 }
 
-void AstDumper::visit(ForNode &p_for)
-{
-    outputIndentationSpace(m_indentation);
+void AstDumper::visit(ForNode &p_for) {
+  outputIndentationSpace(m_indentation);
 
-    std::printf("for statement <line: %u, col: %u>\n", p_for.getLocation().line,
-                p_for.getLocation().col);
+  std::printf("for statement <line: %u, col: %u>\n", p_for.getLocation().line,
+              p_for.getLocation().col);
 
-    incrementIndentation();
-    p_for.visitChildNodes(*this);
-    decrementIndentation();
+  incrementIndentation();
+  p_for.visitChildNodes(*this);
+  decrementIndentation();
 }
 
-void AstDumper::visit(ReturnNode &p_return)
-{
-    outputIndentationSpace(m_indentation);
+void AstDumper::visit(ReturnNode &p_return) {
+  outputIndentationSpace(m_indentation);
 
-    std::printf("return statement <line: %u, col: %u>\n",
-                p_return.getLocation().line, p_return.getLocation().col);
+  std::printf("return statement <line: %u, col: %u>\n",
+              p_return.getLocation().line, p_return.getLocation().col);
 
-    incrementIndentation();
-    p_return.visitChildNodes(*this);
-    decrementIndentation();
-}
-
-std::string AstDumper::typeToString(const PType &type)
-{
-    std::string ret = "";
-    switch (type.stype)
-    {
-    case SType::int_t:
-        ret = "integer";
-        break;
-    case SType::real_t:
-        ret = "real";
-        break;
-    case SType::string_t:
-        ret = "string";
-        break;
-    case SType::bool_t:
-        ret = "boolean";
-        break;
-    case SType::void_t:
-        ret = "void";
-        break;
-    default:
-        ret = "unknown";
-        break;
-    }
-    if (type.dim.size())
-    {
-        ret += " ";
-    }
-    for (auto i : type.dim)
-    {
-        ret += "[" + std::to_string(i) + "]";
-    }
-    return ret;
-}
-
-const char *AstDumper::valueToString(const PType type, const ConstantValue value)
-{
-    switch (type.stype)
-    {
-    case SType::int_t:
-        return std::to_string(value.int_val).c_str();
-    case SType::real_t:
-        return std::to_string(value.real_val).c_str();
-    case SType::string_t:
-        return value.str_val;
-    case SType::bool_t:
-        return value.bool_val ? "true" : "false";
-    default:
-        return "unknown";
-    }
-}
-
-std::string AstDumper::operatorToString(const Operator op)
-{
-    switch (op)
-    {
-    case Operator::NEGATIVE_op:
-        return "neg";
-    case Operator::MULTIPLY_op:
-        return "*";
-    case Operator::DIVIDE_op:
-        return "/";
-    case Operator::MOD_op:
-        return "mod";
-    case Operator::PLUS_op:
-        return "+";
-    case Operator::MINUS_op:
-        return "-";
-    case Operator::LESS_op:
-        return "<";
-    case Operator::LESS_OR_EQUAL_op:
-        return "<=";
-    case Operator::GREATER_op:
-        return ">";
-    case Operator::GREATER_OR_EQUAL_op:
-        return ">=";
-    case Operator::EQUAL_op:
-        return "=";
-    case Operator::NOT_EQUAL_op:
-        return "<>";
-    case Operator::AND_op:
-        return "and";
-    case Operator::OR_op:
-        return "or";
-    case Operator::NOT_op:
-        return "not";
-    default:
-        return "unknown";
-    }
+  incrementIndentation();
+  p_return.visitChildNodes(*this);
+  decrementIndentation();
 }
